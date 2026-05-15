@@ -13,6 +13,10 @@
 # limitations under the License.
 
 /dataset/
-/out/
 *.html
 tmp/
+**/out/
+test/
+**/__pycache__/*
+*.html
+*.swp
