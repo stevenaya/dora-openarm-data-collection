@@ -14,3 +14,7 @@
 
 /dataset/
 /out/
+/.dora-env
+/.venv/
+/requirements-local/*
+!/requirements-local/editable.example.txt
