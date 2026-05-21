@@ -51,10 +51,10 @@ nodes:
     build: pip install -e nodes/dora-openarm-dummy-ker
     # build: pip install dora-openarm-dummy-ker
     path: dora-openarm-dummy-ker
-    env:
-      MOTION_MODE: "random" # random, static, or smooth
-      SMOOTH_AMPLITUDE: "0.3"
-      SMOOTH_FREQUENCY: "0.12"
+    # env:
+    #   MOTION_MODE: "random" # random, static, or smooth
+    #   SMOOTH_AMPLITUDE: "0.3"
+    #   SMOOTH_FREQUENCY: "0.12"
     inputs:
       tick: quittable-tick-leader/tick
     outputs:
