@@ -6,49 +6,24 @@ This repository provides data collection configurations for [OpenArm](https://op
 
 [`dataflow/metadata.yaml`](dataflow/metadata.yaml) is metadata used by all configurations.
 
-## Development Environment
+## Development
 
-Create the Python environment from the parent repository:
+For the development scripts, dependency override logic, and release workflow,
+see [`dev/README.md`](dev/README.md).
+
+Quick start:
 
 ```bash
 source scripts/setup-env.sh
 ```
 
-The default mode syncs the parent repository's normal project dependencies.
-Those common packages live in `[project].dependencies`, so `uv run dora ...`
-will also keep them in the environment during its own sync step.
-
-To also use pinned core dependencies from the parent `pyproject.toml`:
+For local editable core repositories:
 
 ```bash
-source scripts/setup-env.sh --dev
-```
-
-To use local editable core dependencies, copy
-[`dev/requirements-local/editable.example.txt`](dev/requirements-local/editable.example.txt)
-to `dev/requirements-local/editable.txt`, edit the paths, then run:
-
-```bash
+cp dev/requirements-local/editable.example.txt dev/requirements-local/editable.txt
+# add local editable package paths, then:
 source scripts/setup-env.sh -e
 ```
-
-The dataflow `build` commands use [`scripts/install-node.sh`](scripts/install-node.sh).
-If a package name is present in `DORA_PARENT_DEP_OVERRIDES`, the node installer
-refreshes that package from the parent `core-pinned` group or
-`dev/requirements-local/editable.txt`, then installs the node dependencies not owned
-by the parent using that node's own metadata and `tool.uv.sources`. If the
-environment variable is not set, nodes are installed normally with their full
-dependency declarations.
-
-After committing changes in local editable core repositories, update the parent
-git pins from `dev/requirements-local/editable.txt`:
-
-```bash
-dev/sync-editable-pins.sh
-```
-
-Use `--dry-run` to preview the `pyproject.toml` changes.
-Without `--dry-run`, the script also runs `uv lock` to refresh `uv.lock`.
 
 ### Real configuration
 
