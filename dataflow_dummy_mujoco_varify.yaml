@@ -167,7 +167,7 @@ nodes:
   - id: openarm-mujoco
     build: pip install -e ../dora-openarm-mujoco
     path: dora-openarm-mujoco
-    args: " --viewer --enable-collision --keyframe home"
+    args: "  --enable-collision --keyframe home"
     inputs:
       right_position: follower-right/position
       left_position:  follower-left/position
