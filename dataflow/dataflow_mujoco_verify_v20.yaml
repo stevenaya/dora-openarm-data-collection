@@ -1,7 +1,7 @@
 nodes:
   - id: ui
-    build: ./scripts/install-node.sh -e nodes/dora-openarm-data-collection-ui
-    # build: ./scripts/install-node.sh dora-openarm-data-collection-ui
+    build: ../scripts/install-node.sh -e ../nodes/dora-openarm-data-collection-ui
+    # build: ../scripts/install-node.sh dora-openarm-data-collection-ui
     path: dora-openarm-data-collection-ui
     env:
       METADATA_FILE: "metadata.yaml"
@@ -12,8 +12,8 @@ nodes:
       - command
 
   - id: quittable-tick-leader
-    build: ./scripts/install-node.sh -e nodes/dora-openarm-quitter
-    # build: ./scripts/install-node.sh dora-openarm-quitter
+    build: ../scripts/install-node.sh -e ../nodes/dora-openarm-quitter
+    # build: ../scripts/install-node.sh dora-openarm-quitter
     path: dora-openarm-quitter
     inputs:
       command: ui/command
@@ -23,9 +23,9 @@ nodes:
       - tick
 
   - id: ker
-    build: ./scripts/install-node.sh -e nodes/dora-openarm-ker
+    build: ../scripts/install-node.sh -e ../nodes/dora-openarm-ker
     path: dora-openarm-ker
-    args: "--device /dev/m5_ker_485 --config nodes/openarm_ker/config/mapping_m5.yaml"
+    args: "--device /dev/m5_ker_485 --config mapping_m5.yaml"
     inputs:
       tick: quittable-tick-leader/tick
     outputs:
@@ -38,16 +38,16 @@ nodes:
       - joystick_button
 
         #- id: lifter
-        #  build: ./scripts/install-node.sh -e ../robot_data/node/dora-openarm-lifter
+        #  build: ../scripts/install-node.sh -e ../robot_data/node/dora-openarm-lifter
         #  path: dora-openarm-lifter
         #  inputs:
         #    joystick_y: ker/joystick_y
         #    joystick_button: ker/joystick_button
 
   - id: follower-right
-    build: ./scripts/install-node.sh -e nodes/dora-openarm
+    build: ../scripts/install-node.sh -e ../nodes/dora-openarm
     path: dora-openarm
-    args: "--side right --align-trigger gripper"
+    args: "--side right --align-trigger gripper --config openarm_v20.yaml"
     inputs:
       # Event ID is only used. Event value isn't used.
       request_position: ker/follower_position_right
@@ -57,9 +57,9 @@ nodes:
       - status
 
   - id: follower-left
-    build: ./scripts/install-node.sh -e nodes/dora-openarm
+    build: ../scripts/install-node.sh -e ../nodes/dora-openarm
     path: dora-openarm
-    args: "--side left --align-trigger gripper"
+    args: "--side left --align-trigger gripper --config openarm_v20.yaml"
     inputs:
       # Event ID is only used. Event value isn't used.
       request_position: ker/follower_position_left
@@ -69,7 +69,7 @@ nodes:
       - status
 
   - id: openarm-mujoco
-    build: ./scripts/install-node.sh -e nodes/dora-openarm-mujoco
+    build: ../scripts/install-node.sh -e ../nodes/dora-openarm-mujoco
     path: dora-openarm-mujoco
     args: " --viewer --enable-collision --keyframe home"
     inputs:

@@ -89,14 +89,14 @@ source scripts/setup-env.sh --dev
 ```
 
 Also installs the parent `core-pinned` dependency group to override node
-dependencies.
+dependencies, plus development tools such as Ruff.
 
 ```bash
 source scripts/setup-env.sh -e
 ```
 
 Installs local editable packages from `dev/requirements-local/editable.txt` to
-override node dependencies.
+override node dependencies, plus development tools such as Ruff.
 
 This file is ignored by Git; commit only `editable.example.txt`.
 

@@ -14,8 +14,8 @@
 
 nodes:
   - id: ui
-    build: ./scripts/install-node.sh -e nodes/dora-openarm-data-collection-ui
-    # build: ./scripts/install-node.sh dora-openarm-data-collection-ui
+    build: ../scripts/install-node.sh -e ../nodes/dora-openarm-data-collection-ui
+    # build: ../scripts/install-node.sh dora-openarm-data-collection-ui
     path: dora-openarm-data-collection-ui
     env:
       METADATA_FILE: "metadata.yaml"
@@ -26,8 +26,8 @@ nodes:
       - command
 
   - id: quittable-tick-leader
-    build: ./scripts/install-node.sh -e nodes/dora-openarm-quitter
-    # build: ./scripts/install-node.sh dora-openarm-quitter
+    build: ../scripts/install-node.sh -e ../nodes/dora-openarm-quitter
+    # build: ../scripts/install-node.sh dora-openarm-quitter
     path: dora-openarm-quitter
     inputs:
       command: ui/command
@@ -37,8 +37,8 @@ nodes:
       - tick
 
   - id: quittable-tick-camera
-    build: ./scripts/install-node.sh -e nodes/dora-openarm-quitter
-    # build: ./scripts/install-node.sh dora-openarm-quitter
+    build: ../scripts/install-node.sh -e ../nodes/dora-openarm-quitter
+    # build: ../scripts/install-node.sh dora-openarm-quitter
     path: dora-openarm-quitter
     inputs:
       command: ui/command
@@ -48,8 +48,8 @@ nodes:
       - tick
 
   - id: leader
-    build: ./scripts/install-node.sh -e nodes/dora-openarm-dummy-ker
-    # build: ./scripts/install-node.sh dora-openarm-dummy-ker
+    build: ../scripts/install-node.sh -e ../nodes/dora-openarm-dummy-ker
+    # build: ../scripts/install-node.sh dora-openarm-dummy-ker
     path: dora-openarm-dummy-ker
     # env:
     #   MOTION_MODE: "random" # random, static, or smooth
@@ -67,8 +67,8 @@ nodes:
       - joystick_button
 
   - id: follower-right
-    build: ./scripts/install-node.sh -e nodes/dora-openarm-dummy
-    # build: ./scripts/install-node.sh dora-openarm-dummy
+    build: ../scripts/install-node.sh -e ../nodes/dora-openarm-dummy
+    # build: ../scripts/install-node.sh dora-openarm-dummy
     path: dora-openarm-dummy
     inputs:
       # Event ID is only used. Event value isn't used.
@@ -79,8 +79,8 @@ nodes:
       - status
 
   - id: camera-wrist-right
-    build: ./scripts/install-node.sh -e nodes/dora-openarm-dummy-camera
-    # build: ./scripts/install-node.sh dora-openarm-dummy-camera
+    build: ../scripts/install-node.sh -e ../nodes/dora-openarm-dummy-camera
+    # build: ../scripts/install-node.sh dora-openarm-dummy-camera
     path: dora-openarm-dummy-camera
     env:
       ENCODING: "jpeg"
@@ -93,8 +93,8 @@ nodes:
       - image
 
   - id: follower-left
-    build: ./scripts/install-node.sh -e nodes/dora-openarm-dummy
-    # build: ./scripts/install-node.sh dora-openarm-dummy
+    build: ../scripts/install-node.sh -e ../nodes/dora-openarm-dummy
+    # build: ../scripts/install-node.sh dora-openarm-dummy
     path: dora-openarm-dummy
     inputs:
       # Event ID is only used. Event value isn't used.
@@ -105,8 +105,8 @@ nodes:
       - status
 
   - id: camera-wrist-left
-    build: ./scripts/install-node.sh -e nodes/dora-openarm-dummy-camera
-    # build: ./scripts/install-node.sh dora-openarm-dummy-camera
+    build: ../scripts/install-node.sh -e ../nodes/dora-openarm-dummy-camera
+    # build: ../scripts/install-node.sh dora-openarm-dummy-camera
     path: dora-openarm-dummy-camera
     env:
       ENCODING: "jpeg"
@@ -119,8 +119,8 @@ nodes:
       - image
 
   - id: camera-head
-    build: ./scripts/install-node.sh -e nodes/dora-openarm-dummy-camera
-    # build: ./scripts/install-node.sh dora-openarm-dummy-camera
+    build: ../scripts/install-node.sh -e ../nodes/dora-openarm-dummy-camera
+    # build: ../scripts/install-node.sh dora-openarm-dummy-camera
     path: dora-openarm-dummy-camera
     inputs:
       tick: quittable-tick-camera/tick
@@ -133,8 +133,8 @@ nodes:
       - image
 
   - id: camera-ceiling
-    build: ./scripts/install-node.sh -e nodes/dora-openarm-dummy-camera
-    # build: ./scripts/install-node.sh dora-openarm-dummy-camera
+    build: ../scripts/install-node.sh -e ../nodes/dora-openarm-dummy-camera
+    # build: ../scripts/install-node.sh dora-openarm-dummy-camera
     path: dora-openarm-dummy-camera
     env:
       ENCODING: "jpeg"
@@ -147,8 +147,8 @@ nodes:
       - image
 
   - id: recorder
-    build: ./scripts/install-node.sh -e nodes/dora-openarm-dataset-recorder
-    # build: ./scripts/install-node.sh dora-openarm-dataset-recorder
+    build: ../scripts/install-node.sh -e ../nodes/dora-openarm-dataset-recorder
+    # build: ../scripts/install-node.sh dora-openarm-dataset-recorder
     path: dora-openarm-dataset-recorder
     env:
       METADATA_FILE: "metadata.yaml"
@@ -165,7 +165,7 @@ nodes:
 
 
   - id: openarm-mujoco
-    build: ./scripts/install-node.sh -e nodes/dora-openarm-mujoco
+    build: ../scripts/install-node.sh -e ../nodes/dora-openarm-mujoco
     path: dora-openarm-mujoco
     args: " --viewer --enable-collision --keyframe home"
     inputs:

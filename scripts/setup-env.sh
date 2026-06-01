@@ -31,9 +31,10 @@ usage: source scripts/setup-env.sh [--dev | -e|--editable]
 
 Modes:
   default       Sync dependencies from the parent pyproject.toml.
-  --dev         Sync parent deps plus pinned core deps from parent pyproject.toml.
+  --dev         Sync parent deps plus pinned core deps and development tools.
   -e, --editable
-                Sync parent deps plus dev/requirements-local/editable.txt.
+                Sync parent deps plus development tools and
+                dev/requirements-local/editable.txt.
 
 Use `source` so the script can activate .venv in the current shell.
 USAGE
@@ -115,14 +116,17 @@ if [ -n "${PYTHON_VERSION:-}" ]; then
   python_args=(-p "${PYTHON_VERSION}")
 fi
 
-"${uv_bin}" venv --seed "${python_args[@]}"
+"${uv_bin}" venv --seed --allow-existing "${python_args[@]}"
 
 sync_args=(sync --no-install-project)
 override_groups=()
 case "${mode}" in
   dev)
-    sync_args+=(--group core-pinned)
+    sync_args+=(--group core-pinned --group dev-tools)
     override_groups+=(core-pinned)
+    ;;
+  editable)
+    sync_args+=(--group dev-tools)
     ;;
 esac
 

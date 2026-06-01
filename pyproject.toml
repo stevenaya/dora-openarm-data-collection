@@ -37,6 +37,9 @@ core-pinned = [
   "openarm-ker",
   "openarm-mujoco",
 ]
+dev-tools = [
+  "ruff == 0.14.11",
+]
 
 [tool.uv]
 package = false
