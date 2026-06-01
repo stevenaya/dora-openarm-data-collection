@@ -1,0 +1,48 @@
+# Copyright 2026 Enactic, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+[project]
+name = "dora-openarm-data-collection"
+version = "0.1.0"
+description = "Data collection configurations for OpenArm with dora-rs"
+requires-python = ">=3.11"
+dependencies = [
+  "dora-rs==0.5.0",
+  "dora-rs-cli==0.5.0",
+  "fastapi[standard]",
+  "mujoco>=3.6.0",
+  "numpy>=2.4.4",
+  "opencv-python",
+  "opencv-video-capture",
+  "pyarrow>=23.0.1",
+  "pyyaml>=6.0",
+  "scipy>=1.17.1",
+  "uvicorn",
+]
+
+[dependency-groups]
+core-pinned = [
+  "openarm-driver",
+  "openarm-ker",
+  "openarm-mujoco",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+# Replace these refs with validated commit SHAs when freezing an integration.
+openarm-driver = { git = "https://github.com/enactic/openarm_driver.git", rev = "0d5870863f653f034d2c5fca9600a477e0ccfd5c" }
+openarm-ker = { git = "https://github.com/enactic/openarm_ker.git", rev = "b985ff6adbbf62fbc2070cab72b5bb7950bc2bba" }
+openarm-mujoco = { git = "https://github.com/stevenaya/openarm_mujoco.git", rev = "d97595d7501d8396bbfbd1a212a23b278b9b6dbf", subdirectory = "v2" }

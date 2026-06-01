@@ -14,7 +14,7 @@
 
 nodes:
   - id: ui
-    build: pip install -e nodes/dora-openarm-data-collection-ui
+    build: ./scripts/install-node.sh nodes/dora-openarm-data-collection-ui
     path: dora-openarm-data-collection-ui
     env:
       METADATA_FILE: "metadata.yaml"
@@ -30,7 +30,7 @@ nodes:
       - command
 
   - id: quittable-tick-camera
-    build: pip install -e nodes/dora-openarm-quitter
+    build: ./scripts/install-node.sh nodes/dora-openarm-quitter
     path: dora-openarm-quitter
     inputs:
       command: ui/command
@@ -40,7 +40,7 @@ nodes:
       - tick
 
   - id: quittable-tick-leader
-    build: pip install -e nodes/dora-openarm-quitter
+    build: ./scripts/install-node.sh nodes/dora-openarm-quitter
     path: dora-openarm-quitter
     inputs:
       command: ui/command
@@ -49,7 +49,7 @@ nodes:
       - tick
 
   - id: udp-receiver
-    build: pip install -e nodes/dora-openarm-vr
+    build: ./scripts/install-node.sh nodes/dora-openarm-vr
     path: dora-openarm-quest-receiver
     args: "--host 0.0.0.0 --port 5006"
     inputs:
@@ -65,7 +65,7 @@ nodes:
       - status
 
   - id: ik
-    build: pip install -e nodes/dora-openarm-kinematics
+    build: ./scripts/install-node.sh nodes/dora-openarm-kinematics
     path: dora-openarm-ik
     args: "--mode bimanual --max-iters 10 --dt 0.1 --damping 0.1 --posture-cost 0.01 --lm-damping 0.01"
     inputs:
@@ -96,7 +96,7 @@ nodes:
 
   # ── MuJoCo viewer  ──
   - id: mujoco-viewer
-    build: pip install -e nodes/dora-openarm-mujoco
+    build: ./scripts/install-node.sh nodes/dora-openarm-mujoco
     path: dora-openarm-mujoco
     args: "--keyframe home --viewer --debug-frames"
     inputs:
@@ -109,7 +109,7 @@ nodes:
       - status
 
   - id: follower-right
-    build: pip install -e nodes/dora-openarm
+    build: ./scripts/install-node.sh nodes/dora-openarm
     path: dora-openarm
     args: "--side right --align-trigger gripper"
     inputs:
@@ -121,7 +121,7 @@ nodes:
       - status
 
   - id: follower-left
-    build: pip install -e nodes/dora-openarm
+    build: ./scripts/install-node.sh nodes/dora-openarm
     path: dora-openarm
     args: "--side left --align-trigger gripper"
     inputs:
@@ -132,7 +132,7 @@ nodes:
       - status
 
   - id: lifter
-    build: pip install -e nodes/dora-openarm-cell-lifter
+    build: ./scripts/install-node.sh nodes/dora-openarm-cell-lifter
     path: dora-openarm-cell-lifter
     inputs:
       joystick_y: udp-receiver/joystick_y
@@ -171,7 +171,7 @@ nodes:
       - image
 
   - id: camera-head-stereo-splitter
-    build: pip install -e nodes/dora-opencv-image-splitter
+    build: ./scripts/install-node.sh nodes/dora-opencv-image-splitter
     path: dora-opencv-image-splitter
     env:
       SPLIT_MODE: "vertical"
@@ -201,7 +201,7 @@ nodes:
       - image
 
   - id: recorder
-    build: pip install -e nodes/dora-openarm-dataset-recorder
+    build: ./scripts/install-node.sh nodes/dora-openarm-dataset-recorder
     path: dora-openarm-dataset-recorder
     env:
       METADATA_FILE: "metadata.yaml"
