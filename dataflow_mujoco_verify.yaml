@@ -1,7 +1,7 @@
 nodes:
   - id: ui
-    build: pip install -e nodes/dora-openarm-data-collection-ui
-    # build: pip install dora-openarm-data-collection-ui
+    build: ./scripts/install-node.sh -e nodes/dora-openarm-data-collection-ui
+    # build: ./scripts/install-node.sh dora-openarm-data-collection-ui
     path: dora-openarm-data-collection-ui
     env:
       METADATA_FILE: "metadata.yaml"
@@ -12,8 +12,8 @@ nodes:
       - command
 
   - id: quittable-tick-leader
-    build: pip install -e nodes/dora-openarm-quitter
-    # build: pip install dora-openarm-quitter
+    build: ./scripts/install-node.sh -e nodes/dora-openarm-quitter
+    # build: ./scripts/install-node.sh dora-openarm-quitter
     path: dora-openarm-quitter
     inputs:
       command: ui/command
@@ -23,7 +23,7 @@ nodes:
       - tick
 
   - id: ker
-    build: pip install -e nodes/dora-openarm-ker
+    build: ./scripts/install-node.sh -e nodes/dora-openarm-ker
     path: dora-openarm-ker
     args: "--device /dev/m5_ker_485 --config nodes/openarm_ker/config/mapping_m5.yaml"
     inputs:
@@ -38,14 +38,14 @@ nodes:
       - joystick_button
 
         #- id: lifter
-        #  build: pip install -e ../robot_data/node/dora-openarm-lifter
+        #  build: ./scripts/install-node.sh -e ../robot_data/node/dora-openarm-lifter
         #  path: dora-openarm-lifter
         #  inputs:
         #    joystick_y: ker/joystick_y
         #    joystick_button: ker/joystick_button
 
   - id: follower-right
-    build: pip install -e nodes/dora-openarm
+    build: ./scripts/install-node.sh -e nodes/dora-openarm
     path: dora-openarm
     # args: "--side right --align-trigger gripper --config ../robot_data/config/openarm_cell.yaml"
     args: "--side right --align-trigger gripper --config nodes/openarm_driver/src/openarm_driver/openarm_cell.yaml"
@@ -58,7 +58,7 @@ nodes:
       - status
 
   - id: follower-left
-    build: pip install -e nodes/dora-openarm
+    build: ./scripts/install-node.sh -e nodes/dora-openarm
     path: dora-openarm
     args: "--side left --align-trigger gripper --config nodes/openarm_driver/src/openarm_driver/openarm_cell.yaml"
     inputs:
@@ -70,7 +70,7 @@ nodes:
       - status
 
   - id: openarm-mujoco
-    build: pip install -e ../dora-openarm-mujoco
+    build: ./scripts/install-node.sh -e nodes/dora-openarm-mujoco
     path: dora-openarm-mujoco
     args: " --viewer --enable-collision --keyframe home"
     inputs:

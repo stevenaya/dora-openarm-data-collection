@@ -4,7 +4,7 @@ set -euo pipefail
 
 usage() {
   cat <<'USAGE'
-usage: scripts/install-node.sh NODE_PATH [NODE_PATH ...]
+usage: scripts/install-node.sh [-e|--editable] NODE_PATH [NODE_PATH ...]
 
 If DORA_PARENT_DEP_OVERRIDES is empty, each node is installed normally.
 If it contains package names, parent-owned dependencies are refreshed from the
@@ -13,15 +13,48 @@ node's own pyproject.toml and tool.uv.sources.
 USAGE
 }
 
-if [ "$#" -lt 1 ]; then
-  usage >&2
-  exit 2
-fi
-
 if [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ]; then
   usage
   exit 0
 fi
+
+node_paths=()
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    -e|--editable)
+      shift
+      if [ "$#" -eq 0 ]; then
+        echo "missing node path after -e/--editable" >&2
+        exit 2
+      fi
+      node_paths+=("$1")
+      ;;
+    --)
+      shift
+      while [ "$#" -gt 0 ]; do
+        node_paths+=("$1")
+        shift
+      done
+      break
+      ;;
+    -*)
+      echo "unknown option: $1" >&2
+      usage >&2
+      exit 2
+      ;;
+    *)
+      node_paths+=("$1")
+      ;;
+  esac
+  shift
+done
+
+if [ "${#node_paths[@]}" -lt 1 ]; then
+  usage >&2
+  exit 2
+fi
+
+set -- "${node_paths[@]}"
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 env_file="${repo_root}/.venv/.dora_env"
