@@ -29,10 +29,10 @@ nodes:
     inputs:
       tick: quittable-tick-leader/tick
     outputs:
-      - left_position
-      - right_position
-      - left_follower_position
-      - right_follower_position
+      - position_left
+      - position_right
+      - follower_position_left
+      - follower_position_right
       - joystick_x
       - joystick_y
       - joystick_button
@@ -51,8 +51,8 @@ nodes:
     args: "--side right --align-trigger gripper --config nodes/openarm_driver/src/openarm_driver/openarm_cell.yaml"
     inputs:
       # Event ID is only used. Event value isn't used.
-      request_position: ker/right_follower_position
-      move_position: ker/right_follower_position
+      request_position: ker/follower_position_right
+      move_position: ker/follower_position_right
     outputs:
       - position
       - status
@@ -63,8 +63,8 @@ nodes:
     args: "--side left --align-trigger gripper --config nodes/openarm_driver/src/openarm_driver/openarm_cell.yaml"
     inputs:
       # Event ID is only used. Event value isn't used.
-      request_position: ker/left_follower_position
-      move_position: ker/left_follower_position
+      request_position: ker/follower_position_left
+      move_position: ker/follower_position_left
     outputs:
       - position
       - status
@@ -74,13 +74,14 @@ nodes:
     path: dora-openarm-mujoco
     args: " --viewer --enable-collision --keyframe home"
     inputs:
-      right_position: follower-right/position
-      left_position:  follower-left/position
+      position_right: follower-right/position
+      position_left:  follower-left/position
     outputs:
       - status
       - arm_right_observation
       - arm_left_observation
       - camera_wrist_right
       - camera_wrist_left
-      - camera_head
+      - camera_head_left
+      - camera_head_right
       - camera_ceiling
