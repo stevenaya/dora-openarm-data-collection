@@ -1,4 +1,4 @@
-# Copy this file to requirements-local/editable.txt and adjust paths for your machine.
+# Copy this file to dev/requirements-local/editable.txt and adjust paths for your machine.
 #
 # These packages are installed before dora build. scripts/setup-env.sh -e
 # records their package names in DORA_PARENT_DEP_OVERRIDES, so node builds

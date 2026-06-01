@@ -33,7 +33,7 @@ Modes:
   default       Sync dependencies from the parent pyproject.toml.
   --dev         Sync parent deps plus pinned core deps from parent pyproject.toml.
   -e, --editable
-                Sync parent deps plus requirements-local/editable.txt.
+                Sync parent deps plus dev/requirements-local/editable.txt.
 
 Use `source` so the script can activate .venv in the current shell.
 USAGE
@@ -102,10 +102,10 @@ uv_bin="$(find_uv)"
 local_requirements=""
 
 if [ "${mode}" = "editable" ]; then
-  local_requirements="${repo_root}/requirements-local/editable.txt"
+  local_requirements="${repo_root}/dev/requirements-local/editable.txt"
   if [ ! -f "${local_requirements}" ]; then
     echo "missing ${local_requirements}" >&2
-    echo "copy requirements-local/editable.example.txt to requirements-local/editable.txt and edit paths." >&2
+    echo "copy dev/requirements-local/editable.example.txt to dev/requirements-local/editable.txt and edit paths." >&2
     exit 1
   fi
 fi
@@ -221,7 +221,7 @@ for group in groups:
             names.add(name)
 
 if mode == "editable":
-    names.update(requirement_file_names(repo_root / "requirements-local" / "editable.txt"))
+    names.update(requirement_file_names(repo_root / "dev" / "requirements-local" / "editable.txt"))
 
 print(" ".join(sorted(names)))
 PY

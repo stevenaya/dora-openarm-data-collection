@@ -4,7 +4,7 @@ This repository provides data collection configurations for [OpenArm](https://op
 
 ## Configurations
 
-[`metadata.yaml`](metadata.yaml) is metadata used by all configurations.
+[`dataflow/metadata.yaml`](dataflow/metadata.yaml) is metadata used by all configurations.
 
 ## Development Environment
 
@@ -25,8 +25,8 @@ source scripts/setup-env.sh --dev
 ```
 
 To use local editable core dependencies, copy
-[`requirements-local/editable.example.txt`](requirements-local/editable.example.txt)
-to `requirements-local/editable.txt`, edit the paths, then run:
+[`dev/requirements-local/editable.example.txt`](dev/requirements-local/editable.example.txt)
+to `dev/requirements-local/editable.txt`, edit the paths, then run:
 
 ```bash
 source scripts/setup-env.sh -e
@@ -35,16 +35,16 @@ source scripts/setup-env.sh -e
 The dataflow `build` commands use [`scripts/install-node.sh`](scripts/install-node.sh).
 If a package name is present in `DORA_PARENT_DEP_OVERRIDES`, the node installer
 refreshes that package from the parent `core-pinned` group or
-`requirements-local/editable.txt`, then installs the node dependencies not owned
+`dev/requirements-local/editable.txt`, then installs the node dependencies not owned
 by the parent using that node's own metadata and `tool.uv.sources`. If the
 environment variable is not set, nodes are installed normally with their full
 dependency declarations.
 
 After committing changes in local editable core repositories, update the parent
-git pins from `requirements-local/editable.txt`:
+git pins from `dev/requirements-local/editable.txt`:
 
 ```bash
-scripts/sync-editable-pins.sh
+dev/sync-editable-pins.sh
 ```
 
 Use `--dry-run` to preview the `pyproject.toml` changes.
@@ -55,7 +55,7 @@ TODO
 
 ### Dummy configuration
 
-[`dataflow_dummy.yaml`](dataflow_dummy.yaml) is a configuration that doesn't use real OpenArm. We can use this for testing a dataflow without real OpenArm.
+[`dataflow/dataflow_dummy.yaml`](dataflow/dataflow_dummy.yaml) is a configuration that doesn't use real OpenArm. We can use this for testing a dataflow without real OpenArm.
 
 ## License
 

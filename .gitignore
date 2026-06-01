@@ -16,10 +16,12 @@ dataset/
 out/
 /.dora-env
 /.venv/
-requirements-local/
-!**/requirements-local/editable.example.txt
 *.html
 tmp/
 test/
 __pycache__/
 *.swp
+/requirements-local/*
+!/requirements-local/editable.example.txt
+/dev/requirements-local/*
+!/dev/requirements-local/editable.example.txt

@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
-# Update parent pyproject git pins from requirements-local/editable.txt.
+# Update parent pyproject git pins from dev/requirements-local/editable.txt.
 set -euo pipefail
 
 usage() {
   cat <<'USAGE'
-usage: scripts/sync-editable-pins.sh [options]
+usage: dev/sync-editable-pins.sh [options]
 
-Reads editable local packages from requirements-local/editable.txt, detects each
-package's git remote, current commit, and subdirectory, then updates only those
-packages in the parent pyproject.toml.
+Reads editable local packages from dev/requirements-local/editable.txt, detects
+each package's git remote, current commit, and subdirectory, then updates only
+those packages in the parent pyproject.toml.
 
 By default, the script fails if a local package repository has uncommitted
 changes, because those changes cannot be reproduced from a commit pin.
@@ -26,7 +26,7 @@ USAGE
 }
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-requirements_file="${repo_root}/requirements-local/editable.txt"
+requirements_file="${repo_root}/dev/requirements-local/editable.txt"
 pyproject_file="${repo_root}/pyproject.toml"
 gitmodules_file="${repo_root}/.gitmodules"
 dry_run=0
