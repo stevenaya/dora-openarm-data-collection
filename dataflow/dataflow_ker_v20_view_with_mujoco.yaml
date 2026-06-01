@@ -47,25 +47,27 @@ nodes:
   - id: follower-right
     build: ../scripts/install-node.sh -e ../nodes/dora-openarm
     path: dora-openarm
-    args: "--side right --align-trigger gripper --config openarm_v20.yaml"
+    args: "--side right --align-trigger gripper --config openarm_v20_sysid.yaml"
     inputs:
       # Event ID is only used. Event value isn't used.
-      request_position: ker/follower_position_right
+      request_state: ker/follower_position_right
       move_position: ker/follower_position_right
     outputs:
       - position
+      - state
       - status
 
   - id: follower-left
     build: ../scripts/install-node.sh -e ../nodes/dora-openarm
     path: dora-openarm
-    args: "--side left --align-trigger gripper --config openarm_v20.yaml"
+    args: "--side left --align-trigger gripper --config openarm_v20_sysid.yaml"
     inputs:
       # Event ID is only used. Event value isn't used.
-      request_position: ker/follower_position_left
+      request_state: ker/follower_position_left
       move_position: ker/follower_position_left
     outputs:
       - position
+      - state
       - status
 
   - id: openarm-mujoco
@@ -84,3 +86,26 @@ nodes:
       - camera_head_left
       - camera_head_right
       - camera_ceiling
+
+  - id: recorder
+    build: ../scripts/install-node.sh ../nodes/dora-openarm-dataset-recorder
+    # build: pip install dora-openarm-dataset-recorder
+    path: dora-openarm-dataset-recorder
+    env:
+      METADATA_FILE: "metadata.yaml"
+      # Output directory for recorded datasets.
+      # Default: directory containing dataflow.yaml
+      # DIRECTORY: "/path/to/datasets"
+    inputs:
+      command: ui/command
+      arm_right_action: ker/follower_position_right
+      arm_right_observation: follower-right/state
+      # camera_wrist_right: camera-wrist-right/image
+      arm_left_action: ker/follower_position_left
+      arm_left_observation: follower-left/state
+      # camera_wrist_left: camera-wrist-left/image
+      # camera_head_left: camera-head-stereo-splitter/image_0
+      # camera_head_right: camera-head-stereo-splitter/image_1
+      # camera_ceiling: camera-ceiling/image
+      # elevation_action: lifter/elevation_action
+      # elevation_observation: lifter/elevation_observation
