@@ -4,6 +4,8 @@
 # records their package names in DORA_PARENT_DEP_OVERRIDES, so node builds
 # refresh these local editable packages before installing dependencies not owned
 # by the parent repo.
+#
+# Editable mode does not sync or update git submodules.
 
 # -e /absolute/path/to/openarm_mujoco/v2
 # -e /absolute/path/to/openarm_control

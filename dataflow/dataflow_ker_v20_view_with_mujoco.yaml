@@ -1,7 +1,6 @@
 nodes:
   - id: ui
-    build: ../scripts/install-node.sh -e ../nodes/dora-openarm-data-collection-ui
-    # build: ../scripts/install-node.sh dora-openarm-data-collection-ui
+    build: ../scripts/install-node.sh dora-openarm-data-collection-ui
     path: dora-openarm-data-collection-ui
     env:
       METADATA_FILE: "metadata.yaml"
@@ -12,8 +11,7 @@ nodes:
       - command
 
   - id: quittable-tick-leader
-    build: ../scripts/install-node.sh -e ../nodes/dora-openarm-quitter
-    # build: ../scripts/install-node.sh dora-openarm-quitter
+    build: ../scripts/install-node.sh dora-openarm-quitter
     path: dora-openarm-quitter
     inputs:
       command: ui/command
@@ -23,7 +21,7 @@ nodes:
       - tick
 
   - id: ker
-    build: ../scripts/install-node.sh -e ../nodes/dora-openarm-ker
+    build: ../scripts/install-node.sh dora-openarm-ker
     path: dora-openarm-ker
     args: "--device /dev/m5_ker_485 --config mapping_m5.yaml"
     inputs:
@@ -45,7 +43,7 @@ nodes:
         #    joystick_button: ker/joystick_button
 
   - id: follower-right
-    build: ../scripts/install-node.sh -e ../nodes/dora-openarm
+    build: ../scripts/install-node.sh dora-openarm
     path: dora-openarm
     args: "--side right --align-trigger gripper --config openarm_v20_sysid.yaml"
     inputs:
@@ -58,7 +56,7 @@ nodes:
       - status
 
   - id: follower-left
-    build: ../scripts/install-node.sh -e ../nodes/dora-openarm
+    build: ../scripts/install-node.sh dora-openarm
     path: dora-openarm
     args: "--side left --align-trigger gripper --config openarm_v20_sysid.yaml"
     inputs:
@@ -71,7 +69,7 @@ nodes:
       - status
 
   - id: openarm-mujoco
-    build: ../scripts/install-node.sh -e ../nodes/dora-openarm-mujoco
+    build: ../scripts/install-node.sh dora-openarm-mujoco
     path: dora-openarm-mujoco
     args: " --viewer --enable-collision --keyframe home"
     inputs:
@@ -88,7 +86,7 @@ nodes:
       - camera_ceiling
 
   - id: recorder
-    build: ../scripts/install-node.sh ../nodes/dora-openarm-dataset-recorder
+    build: ../scripts/install-node.sh dora-openarm-dataset-recorder
     # build: pip install dora-openarm-dataset-recorder
     path: dora-openarm-dataset-recorder
     env:

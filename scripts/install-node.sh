@@ -4,7 +4,10 @@ set -euo pipefail
 
 usage() {
   cat <<'USAGE'
-usage: scripts/install-node.sh [-e|--editable] NODE_PATH [NODE_PATH ...]
+usage: scripts/install-node.sh [-e|--editable] NODE [NODE ...]
+
+NODE may be a path or a node name under nodes/. -e/--editable forces local
+node installation even when DORA_NODE_OVERRIDE_FILE contains a remote override.
 
 If DORA_PARENT_DEP_OVERRIDES is empty, each node is installed normally.
 If it contains package names, parent-owned dependencies are refreshed from the
@@ -19,12 +22,14 @@ if [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ]; then
 fi
 
 node_paths=()
+force_local_nodes=0
 while [ "$#" -gt 0 ]; do
   case "$1" in
     -e|--editable)
+      force_local_nodes=1
       shift
       if [ "$#" -eq 0 ]; then
-        echo "missing node path after -e/--editable" >&2
+        echo "missing node after -e/--editable" >&2
         exit 2
       fi
       node_paths+=("$1")
@@ -64,57 +69,81 @@ if [ -f "${env_file}" ]; then
 fi
 
 overrides="${DORA_PARENT_DEP_OVERRIDES:-}"
+node_override_file="${DORA_NODE_OVERRIDE_FILE:-}"
 python_args=()
 if [ -x "${repo_root}/.venv/bin/python" ]; then
   python_args=(--python "${repo_root}/.venv/bin/python")
 fi
 
-if [ -z "${overrides}" ]; then
-  if [ -n "${DORA_NODE_INSTALLER:-}" ]; then
-    read -r -a install_cmd <<< "${DORA_NODE_INSTALLER}"
-  elif command -v uv >/dev/null 2>&1; then
-    for node_path in "$@"; do
-      uv pip install "${python_args[@]}" --project "${node_path}" -e "${node_path}"
-    done
-    exit 0
-  elif [ -x "${repo_root}/.venv/bin/python" ]; then
-    install_cmd=("${repo_root}/.venv/bin/python" -m pip install)
-  elif command -v pip >/dev/null 2>&1; then
-    install_cmd=(pip install)
-  else
-    install_cmd=(python3 -m pip install)
-  fi
+resolve_node_path() {
+  local value="$1"
+  local candidate
 
-  args=()
-  for node_path in "$@"; do
-    args+=(-e "${node_path}")
+  for candidate in "${value}" "${repo_root}/${value}" "${repo_root}/nodes/${value}"; do
+    if [ -f "${candidate}/pyproject.toml" ]; then
+      (cd "${candidate}" && pwd)
+      return 0
+    fi
   done
-  "${install_cmd[@]}" "${args[@]}"
-  exit 0
-fi
 
-if ! command -v uv >/dev/null 2>&1; then
-  echo "uv is required when DORA_PARENT_DEP_OVERRIDES is set" >&2
-  exit 1
-fi
+  return 1
+}
 
-for group in ${DORA_PARENT_DEP_GROUPS:-}; do
-  uv pip install "${python_args[@]}" --project "${repo_root}" --group "${group}"
-done
+node_override_spec() {
+  local node_input="$1"
+  local node_path="$2"
 
-if [ -n "${DORA_PARENT_REQUIREMENTS_FILE:-}" ]; then
-  if [ ! -f "${DORA_PARENT_REQUIREMENTS_FILE}" ]; then
-    echo "missing ${DORA_PARENT_REQUIREMENTS_FILE}" >&2
-    echo "run scripts/setup-env.sh before building nodes with local editable overrides" >&2
-    exit 1
+  if [ "${force_local_nodes}" -eq 1 ] || [ -z "${node_override_file}" ] || [ ! -f "${node_override_file}" ]; then
+    return 0
   fi
-  uv pip install "${python_args[@]}" --project "${repo_root}" -r "${DORA_PARENT_REQUIREMENTS_FILE}"
-fi
 
-for node_path in "$@"; do
+  python3 - "${node_override_file}" "${repo_root}" "${node_input}" "${node_path}" <<'PY'
+from __future__ import annotations
+
+import shlex
+import sys
+from pathlib import Path
+
+override_file = Path(sys.argv[1])
+repo_root = Path(sys.argv[2]).resolve()
+node_input = sys.argv[3]
+node_path = sys.argv[4]
+
+
+def normalize_path(value: str) -> str:
+    return value.replace("\\", "/").strip("/")
+
+
+keys = {normalize_path(node_input), Path(node_input).name}
+if "/" not in normalize_path(node_input):
+    keys.add(f"nodes/{normalize_path(node_input)}")
+if node_path:
+    resolved = Path(node_path).resolve()
+    keys.add(resolved.name)
+    try:
+        keys.add(resolved.relative_to(repo_root).as_posix())
+    except ValueError:
+        pass
+
+with override_file.open(encoding="utf-8") as file:
+    for raw_line in file:
+        parts = shlex.split(raw_line, comments=True)
+        if not parts:
+            continue
+        if len(parts) != 3:
+            raise SystemExit(f"{override_file} lines must be: path url rev; got {raw_line.rstrip()}")
+        path, url, rev = parts
+        if normalize_path(path) in keys or Path(path).name in keys:
+            print(f"{path}\t{url}\t{rev}")
+            break
+PY
+}
+
+install_node_dependencies() {
+  local node_path="$1"
+
   if [ ! -f "${node_path}/pyproject.toml" ]; then
-    echo "missing ${node_path}/pyproject.toml" >&2
-    exit 1
+    return 0
   fi
 
   mapfile -t install_deps < <(
@@ -160,6 +189,80 @@ PY
   if [ "${#install_deps[@]}" -gt 0 ]; then
     uv pip install "${python_args[@]}" --project "${node_path}" "${install_deps[@]}"
   fi
+}
 
+if [ -z "${overrides}" ] && { [ -z "${node_override_file}" ] || [ "${force_local_nodes}" -eq 1 ]; }; then
+  if [ -n "${DORA_NODE_INSTALLER:-}" ]; then
+    read -r -a install_cmd <<< "${DORA_NODE_INSTALLER}"
+  elif command -v uv >/dev/null 2>&1; then
+    for node_input in "$@"; do
+      node_path="$(resolve_node_path "${node_input}" || true)"
+      if [ -z "${node_path}" ]; then
+        echo "missing node ${node_input}; expected a path or nodes/${node_input}" >&2
+        exit 1
+      fi
+      uv pip install "${python_args[@]}" --project "${node_path}" -e "${node_path}"
+    done
+    exit 0
+  elif [ -x "${repo_root}/.venv/bin/python" ]; then
+    install_cmd=("${repo_root}/.venv/bin/python" -m pip install)
+  elif command -v pip >/dev/null 2>&1; then
+    install_cmd=(pip install)
+  else
+    install_cmd=(python3 -m pip install)
+  fi
+
+  args=()
+  for node_input in "$@"; do
+    node_path="$(resolve_node_path "${node_input}" || true)"
+    if [ -z "${node_path}" ]; then
+      echo "missing node ${node_input}; expected a path or nodes/${node_input}" >&2
+      exit 1
+    fi
+    args+=(-e "${node_path}")
+  done
+  "${install_cmd[@]}" "${args[@]}"
+  exit 0
+fi
+
+if ! command -v uv >/dev/null 2>&1; then
+  echo "uv is required when parent dependency or node overrides are set" >&2
+  exit 1
+fi
+
+for group in ${DORA_PARENT_DEP_GROUPS:-}; do
+  uv pip install "${python_args[@]}" --project "${repo_root}" --group "${group}"
+done
+
+if [ -n "${DORA_PARENT_REQUIREMENTS_FILE:-}" ]; then
+  if [ ! -f "${DORA_PARENT_REQUIREMENTS_FILE}" ]; then
+    echo "missing ${DORA_PARENT_REQUIREMENTS_FILE}" >&2
+    echo "run scripts/setup-env.sh before building nodes with local editable overrides" >&2
+    exit 1
+  fi
+  uv pip install "${python_args[@]}" --project "${repo_root}" -r "${DORA_PARENT_REQUIREMENTS_FILE}"
+fi
+
+for node_input in "$@"; do
+  node_path="$(resolve_node_path "${node_input}" || true)"
+  override_spec="$(node_override_spec "${node_input}" "${node_path}" || true)"
+
+  if [ -n "${override_spec}" ]; then
+    IFS=$'\t' read -r override_path override_url override_rev <<< "${override_spec}"
+    if [ -n "${node_path}" ]; then
+      install_node_dependencies "${node_path}"
+    else
+      echo "warning: ${override_path} is installed from a remote override without local dependency filtering" >&2
+    fi
+    uv pip install "${python_args[@]}" --no-deps "git+${override_url}@${override_rev}"
+    continue
+  fi
+
+  if [ -z "${node_path}" ]; then
+    echo "missing node ${node_input}; expected a path or nodes/${node_input}" >&2
+    exit 1
+  fi
+
+  install_node_dependencies "${node_path}"
   uv pip install "${python_args[@]}" --no-deps -e "${node_path}"
 done

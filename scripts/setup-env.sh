@@ -31,10 +31,11 @@ usage: source scripts/setup-env.sh [--dev | -e|--editable]
 
 Modes:
   default       Sync dependencies from the parent pyproject.toml.
-  --dev         Sync parent deps plus pinned core deps and development tools.
+  --dev         Sync parent deps plus pinned core deps, development tools, and
+                remote node overrides from dev/submodule-overrides.txt.
   -e, --editable
                 Sync parent deps plus development tools and
-                dev/requirements-local/editable.txt.
+                dev/requirements-local/editable.txt. Node builds stay local.
 
 Use `source` so the script can activate .venv in the current shell.
 USAGE
@@ -63,6 +64,7 @@ while [ "$#" -gt 0 ]; do
 done
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+submodule_overrides_file="${repo_root}/dev/submodule-overrides.txt"
 cd "${repo_root}"
 
 find_uv() {
@@ -102,16 +104,43 @@ find_uv() {
 sync_submodules() {
   local clean_submodules=()
   local dirty_submodules=()
+  local overridden_submodules=()
+  local override_paths=()
   local path
+  local skip_overridden=0
 
   if [ ! -f "${repo_root}/.gitmodules" ]; then
     return 0
+  fi
+
+  if [ "${mode}" = "editable" ]; then
+    echo "Skipping submodule checkout in editable mode."
+    return 0
+  fi
+
+  if [ "${mode}" = "dev" ] && [ -f "${submodule_overrides_file}" ]; then
+    while read -r path _; do
+      case "${path}" in
+        ""|\#*) continue ;;
+      esac
+      override_paths+=("${path}")
+    done < "${submodule_overrides_file}"
+    skip_overridden=1
   fi
 
   echo "Syncing submodule URLs..."
   git submodule sync --recursive
 
   while IFS= read -r path; do
+    if [ "${skip_overridden}" -eq 1 ]; then
+      case " ${override_paths[*]} " in
+        *" ${path} "*)
+          overridden_submodules+=("${path}")
+          continue
+          ;;
+      esac
+    fi
+
     if git -C "${path}" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
       if [ -n "$(git -C "${path}" status --porcelain)" ]; then
         dirty_submodules+=("${path}")
@@ -127,6 +156,13 @@ sync_submodules() {
       echo "  ${path}" >&2
     done
     echo "Commit, stash, or discard those changes before updating them." >&2
+  fi
+
+  if [ "${#overridden_submodules[@]}" -gt 0 ]; then
+    echo "Skipping submodules with override pins:"
+    for path in "${overridden_submodules[@]}"; do
+      echo "  ${path}"
+    done
   fi
 
   if [ "${#clean_submodules[@]}" -gt 0 ]; then
@@ -271,6 +307,10 @@ PY
 
 env_file="${repo_root}/.venv/.dora_env"
 override_group_value="${override_groups[*]}"
+node_override_file=""
+if [ "${mode}" = "dev" ] && [ -f "${submodule_overrides_file}" ]; then
+  node_override_file="${submodule_overrides_file}"
+fi
 cat > "${env_file}" <<EOF
 export VIRTUAL_ENV="${repo_root}/.venv"
 case ":\$PATH:" in
@@ -280,6 +320,7 @@ esac
 export DORA_PARENT_DEP_OVERRIDES="${overrides}"
 export DORA_PARENT_DEP_GROUPS="${override_group_value}"
 export DORA_PARENT_REQUIREMENTS_FILE="${local_requirements}"
+export DORA_NODE_OVERRIDE_FILE="${node_override_file}"
 EOF
 
 activate_file="${repo_root}/.venv/bin/activate"
@@ -297,6 +338,7 @@ fi
 echo "Environment ready (${mode})."
 echo "Environment file: ${env_file}"
 echo "Parent dependency overrides: ${overrides:-none}"
+echo "Node override file: ${node_override_file:-none}"
 if [ "${DORA_SETUP_ENV_CALLED_FROM_SOURCE:-0}" != "1" ]; then
   echo "Run: source .venv/bin/activate"
 fi

@@ -27,7 +27,8 @@ source scripts/setup-env.sh -e
 ```
 
 This makes Dora builds use your local core repositories instead of the node's
-default Git sources.
+default Git sources. Editable mode does not sync, initialize, or update
+submodules; it leaves the working tree as-is.
 
 3. If you need to modify a node submodule itself, fork it first and work on a
    dedicated branch.
@@ -44,10 +45,11 @@ git -C /path/to/core-repo push
    same test environment.
 
 ```bash
-dev/sync-editable-pins.sh --sync-gitmodules
+dev/sync-editable-pins.sh --sync-submodules
 ```
 
-This updates `pyproject.toml`, `.gitmodules` when needed, and `uv.lock`.
+This updates `pyproject.toml`, `dev/submodule-overrides.txt` when needed, and
+`uv.lock`. `.gitmodules` stays pointed at the public submodule repositories.
 
 6. Push the parent repository changes.
 
@@ -57,7 +59,7 @@ This updates `pyproject.toml`, `.gitmodules` when needed, and `uv.lock`.
 source scripts/setup-env.sh --dev
 ```
 
-This installs the pinned core-library Git commits and node submodule versions
+This installs pinned core-library Git commits and any remote node overrides
 recorded by that parent repository.
 
 8. For PRs, upstream changes from the inside out:
@@ -70,7 +72,7 @@ recorded by that parent repository.
      public node branches and run:
 
 ```bash
-dev/sync-editable-pins.sh --sync-gitmodules
+dev/sync-editable-pins.sh --sync-submodules
 ```
 
 Finally, open the parent repository PR.
@@ -83,13 +85,19 @@ source scripts/setup-env.sh
 ```
 
 Installs common dependencies from parent `[project].dependencies`.
+It also syncs submodule URLs from `.gitmodules` and checks out all clean
+submodules to the commits recorded by the parent repository.
 
 ```bash
 source scripts/setup-env.sh --dev
 ```
 
 Also installs the parent `core-pinned` dependency group to override node
-dependencies, plus development tools such as Ruff.
+dependencies, development tools such as Ruff, and remote node overrides from
+`dev/submodule-overrides.txt`.
+During submodule checkout it skips the paths listed in
+`dev/submodule-overrides.txt`, because those commits may only exist in forks and
+are installed later by `scripts/install-node.sh`.
 
 ```bash
 source scripts/setup-env.sh -e
@@ -97,15 +105,36 @@ source scripts/setup-env.sh -e
 
 Installs local editable packages from `dev/requirements-local/editable.txt` to
 override node dependencies, plus development tools such as Ruff.
+It skips all submodule URL sync and checkout/update work.
 
 This file is ignored by Git; commit only `editable.example.txt`.
+
+## Submodule Pins
+
+`.gitmodules` should stay pointed at the public submodule repositories. The
+parent repository still records exact submodule commits through normal gitlink
+entries.
+
+Fork-only node commits are recorded separately in
+`dev/submodule-overrides.txt`:
+
+```text
+path url rev
+```
+
+`source scripts/setup-env.sh --dev` exports this file as
+`DORA_NODE_OVERRIDE_FILE`. During Dora builds, `scripts/install-node.sh` installs
+listed nodes from `git+url@rev` instead of from the local submodule checkout.
+
+`source scripts/setup-env.sh -e` ignores this file for node installation and
+does not touch submodule checkouts.
 
 ## Build Behavior
 
 Dataflow `build` commands call:
 
 ```yaml
-build: ./scripts/install-node.sh nodes/dora-openarm
+build: ./scripts/install-node.sh dora-openarm
 ```
 
 `scripts/install-node.sh` reads `.venv/.dora_env`, written by
@@ -114,8 +143,13 @@ build: ./scripts/install-node.sh nodes/dora-openarm
 - No parent overrides: install the node normally from its own `pyproject.toml`.
 - With parent overrides: install parent-owned deps first, then skip those deps
   when installing the node.
+- With `DORA_NODE_OVERRIDE_FILE` from `source scripts/setup-env.sh --dev`, install
+  listed nodes from the pinned remote Git URL instead of the local submodule.
+- With `source scripts/setup-env.sh -e`, `DORA_NODE_OVERRIDE_FILE` is empty and
+  node builds install from the local `nodes/` checkout.
 
-This lets local editable core packages override a node's default Git sources.
+This lets one dataflow build command work for local editable development and
+fork-pinned reproduction.
 
 ## Freeze Commands
 
@@ -131,17 +165,20 @@ Update parent pins and `uv.lock`:
 dev/sync-editable-pins.sh
 ```
 
-Also sync `.gitmodules` for submodules currently pointing at fork commits:
+Also sync remote node overrides for submodules currently pointing at fork
+commits:
 
 ```bash
-dev/sync-editable-pins.sh --sync-gitmodules
+dev/sync-editable-pins.sh --sync-submodules
 ```
 
-Only sync `.gitmodules`:
+Only sync remote node overrides:
 
 ```bash
-dev/sync-editable-pins.sh --gitmodules-only
+dev/sync-editable-pins.sh --submodules-only
 ```
 
-The `.gitmodules` sync refuses local-only submodule commits. Push or fetch the
-remote first, then rerun.
+The submodule override sync refuses local-only submodule commits. Push or fetch
+the remote first, then rerun. The old `--sync-gitmodules` and
+`--gitmodules-only` names are kept as aliases, but they update
+`dev/submodule-overrides.txt` rather than `.gitmodules`.

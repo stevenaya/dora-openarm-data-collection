@@ -14,7 +14,7 @@
 
 nodes:
   - id: ui
-    build: ../scripts/install-node.sh ../nodes/dora-openarm-data-collection-ui
+    build: ../scripts/install-node.sh dora-openarm-data-collection-ui
     path: dora-openarm-data-collection-ui
     env:
       METADATA_FILE: "metadata_mujoco.yaml"
@@ -30,7 +30,7 @@ nodes:
       - command
 
   - id: quittable-tick-leader
-    build: ../scripts/install-node.sh ../nodes/dora-openarm-quitter
+    build: ../scripts/install-node.sh dora-openarm-quitter
     path: dora-openarm-quitter
     inputs:
       command: ui/command
@@ -39,7 +39,7 @@ nodes:
       - tick
 
   - id: udp-receiver
-    build: ../scripts/install-node.sh ../nodes/dora-openarm-vr
+    build: ../scripts/install-node.sh dora-openarm-vr
     path: dora-openarm-quest-receiver
     args: "--host 0.0.0.0 --port 5006"
     inputs:
@@ -55,7 +55,7 @@ nodes:
       - status
 
   - id: ik
-    build: ../scripts/install-node.sh ../nodes/dora-openarm-kinematics
+    build: ../scripts/install-node.sh dora-openarm-kinematics
     path: dora-openarm-ik
     args: "--mode bimanual --max-iters 10 --dt 0.1 --damping 0.1 --posture-cost 0.01 --lm-damping 0.01"
     inputs:
@@ -71,7 +71,7 @@ nodes:
 
   # ── MuJoCo viewer (replaces follower-right, follower-left, and all cameras) ──
   - id: mujoco-collect
-    build: ../scripts/install-node.sh ../nodes/dora-openarm-mujoco
+    build: ../scripts/install-node.sh dora-openarm-mujoco
     path: dora-openarm-mujoco
     args: "--scene demo --keyframe home --enable-collision --ctrl --viewer --render"
     env:
@@ -93,7 +93,7 @@ nodes:
       - camera_ceiling
 
   - id: recorder
-    build: ../scripts/install-node.sh ../nodes/dora-openarm-dataset-recorder
+    build: ../scripts/install-node.sh dora-openarm-dataset-recorder
     path: dora-openarm-dataset-recorder
     env:
       METADATA_FILE: "metadata_mujoco.yaml"

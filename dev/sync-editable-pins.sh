@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Update parent pyproject git pins from dev/requirements-local/editable.txt.
+# Update parent pyproject git pins and node submodule override pins.
 set -euo pipefail
 
 usage() {
@@ -18,9 +18,13 @@ Options:
   --pyproject FILE          Parent pyproject.toml to update.
   --dry-run                 Print diffs without writing files.
   --allow-dirty             Allow dirty editable package/submodule repos.
-  --sync-gitmodules         Update .gitmodules URLs from remotes containing submodule HEAD.
-  --gitmodules-only         Only update .gitmodules URLs.
-  --gitmodules FILE         .gitmodules file to update.
+  --sync-submodules         Update dev/submodule-overrides.txt from submodule HEADs.
+  --submodules-only         Only update dev/submodule-overrides.txt.
+  --submodule-overrides FILE
+                            Submodule override file to update.
+  --sync-gitmodules         Deprecated alias for --sync-submodules.
+  --gitmodules-only         Deprecated alias for --submodules-only.
+  --gitmodules FILE         .gitmodules file to read submodule paths and base URLs from.
   --submodule PATH          Submodule path to update. May be repeated.
 USAGE
 }
@@ -29,10 +33,11 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 requirements_file="${repo_root}/dev/requirements-local/editable.txt"
 pyproject_file="${repo_root}/pyproject.toml"
 gitmodules_file="${repo_root}/.gitmodules"
+submodule_overrides_file="${repo_root}/dev/submodule-overrides.txt"
 dry_run=0
 allow_dirty=0
-sync_gitmodules=0
-gitmodules_only=0
+sync_submodule_overrides=0
+submodules_only=0
 submodule_paths=()
 
 while [ "$#" -gt 0 ]; do
@@ -59,12 +64,20 @@ while [ "$#" -gt 0 ]; do
     --allow-dirty)
       allow_dirty=1
       ;;
-    --sync-gitmodules)
-      sync_gitmodules=1
+    --sync-submodules|--sync-gitmodules)
+      sync_submodule_overrides=1
       ;;
-    --gitmodules-only)
-      sync_gitmodules=1
-      gitmodules_only=1
+    --submodules-only|--gitmodules-only)
+      sync_submodule_overrides=1
+      submodules_only=1
+      ;;
+    --submodule-overrides)
+      shift
+      if [ "$#" -eq 0 ]; then
+        echo "missing value for --submodule-overrides" >&2
+        exit 2
+      fi
+      submodule_overrides_file="$1"
       ;;
     --gitmodules)
       shift
@@ -80,7 +93,7 @@ while [ "$#" -gt 0 ]; do
         echo "missing value for --submodule" >&2
         exit 2
       fi
-      sync_gitmodules=1
+      sync_submodule_overrides=1
       submodule_paths+=("$1")
       ;;
     -h|--help)
@@ -102,9 +115,10 @@ python3 - \
   "${pyproject_file}" \
   "${dry_run}" \
   "${allow_dirty}" \
-  "${sync_gitmodules}" \
-  "${gitmodules_only}" \
+  "${sync_submodule_overrides}" \
+  "${submodules_only}" \
   "${gitmodules_file}" \
+  "${submodule_overrides_file}" \
   -- "${submodule_paths[@]}" <<'PY'
 from __future__ import annotations
 
@@ -126,10 +140,11 @@ requirements_file = Path(sys.argv[2])
 pyproject_file = Path(sys.argv[3])
 dry_run = sys.argv[4] == "1"
 allow_dirty = sys.argv[5] == "1"
-sync_gitmodules = sys.argv[6] == "1"
-gitmodules_only = sys.argv[7] == "1"
+sync_submodule_overrides = sys.argv[6] == "1"
+submodules_only = sys.argv[7] == "1"
 gitmodules_file = Path(sys.argv[8])
-submodule_paths = sys.argv[10:]
+submodule_overrides_file = Path(sys.argv[9])
+submodule_paths = sys.argv[11:]
 
 if not requirements_file.is_absolute():
     requirements_file = (repo_root / requirements_file).resolve()
@@ -137,6 +152,8 @@ if not pyproject_file.is_absolute():
     pyproject_file = (repo_root / pyproject_file).resolve()
 if not gitmodules_file.is_absolute():
     gitmodules_file = (repo_root / gitmodules_file).resolve()
+if not submodule_overrides_file.is_absolute():
+    submodule_overrides_file = (repo_root / submodule_overrides_file).resolve()
 
 
 @dataclass(frozen=True)
@@ -155,6 +172,15 @@ class SubmodulePin:
     remote: str
     rev: str
     branch: str
+
+
+@dataclass(frozen=True)
+class SubmoduleOverride:
+    path: str
+    url: str
+    rev: str
+    remote: str = ""
+    branch: str = ""
 
 
 def normalize(name: str) -> str:
@@ -418,6 +444,8 @@ def choose_submodule_remote(path: Path, path_text: str) -> str:
 
     if len(remotes) == 1:
         return next(iter(remotes))
+    if len(set(remotes.values())) == 1:
+        return sorted(remotes)[0]
 
     candidates = ", ".join(f"{name}={url}" for name, url in sorted(remotes.items()))
     raise SystemExit(
@@ -443,46 +471,85 @@ def submodule_pin_from_path(path_text: str) -> SubmodulePin:
     return SubmodulePin(path=path_text, url=url, remote=remote, rev=rev, branch=branch)
 
 
-def update_gitmodules_lines(lines: list[str], pins: list[SubmodulePin]) -> list[str]:
-    updated = lines.copy()
-    for pin in pins:
-        section = f'[submodule "{pin.path}"]'
-        section_index = None
-        for index, line in enumerate(updated):
-            if line.strip() == section:
-                section_index = index
-                break
-        if section_index is None:
-            raise SystemExit(f"{gitmodules_file} does not contain {section}")
-
-        next_section = len(updated)
-        for index in range(section_index + 1, len(updated)):
-            if re.match(r"\s*\[", updated[index]):
-                next_section = index
-                break
-
-        url_index = None
-        for index in range(section_index + 1, next_section):
-            if re.match(r"\s*url\s*=", updated[index]):
-                url_index = index
-                break
-        replacement = f"\turl = {pin.url}\n"
-        if url_index is None:
-            updated.insert(next_section, replacement)
-        else:
-            updated[url_index] = replacement
-    return updated
-
-
-def sync_local_submodule_config(pins: list[SubmodulePin]) -> None:
-    for pin in pins:
-        subprocess.run(
-            ["git", "-C", str(repo_root), "submodule", "sync", "--", pin.path],
-            check=True,
+def override_from_line(line: str) -> SubmoduleOverride | None:
+    body, _, comment = line.partition("#")
+    try:
+        parts = shlex.split(body)
+    except ValueError as exc:
+        raise SystemExit(f"invalid line in {submodule_overrides_file}: {line.rstrip()}") from exc
+    if not parts:
+        return None
+    if len(parts) != 3:
+        raise SystemExit(
+            f"{submodule_overrides_file} lines must be: path url rev; got {line.rstrip()}"
         )
+    metadata = dict(
+        item.split("=", 1)
+        for item in comment.strip().split()
+        if "=" in item
+    )
+    return SubmoduleOverride(
+        path=parts[0],
+        url=parts[1],
+        rev=parts[2],
+        remote=metadata.get("remote", ""),
+        branch=metadata.get("branch", ""),
+    )
 
 
-if not gitmodules_only:
+def read_submodule_overrides() -> dict[str, SubmoduleOverride]:
+    if not submodule_overrides_file.exists():
+        return {}
+    overrides: dict[str, SubmoduleOverride] = {}
+    with submodule_overrides_file.open(encoding="utf-8") as file:
+        for raw_line in file:
+            override = override_from_line(raw_line)
+            if override is not None:
+                overrides[override.path] = override
+    return overrides
+
+
+def override_line(override: SubmoduleOverride) -> str:
+    parts = [shlex.quote(override.path), shlex.quote(override.url), shlex.quote(override.rev)]
+    comment_parts = []
+    if override.remote:
+        comment_parts.append(f"remote={override.remote}")
+    if override.branch:
+        comment_parts.append(f"branch={override.branch}")
+    comment = f" # {' '.join(comment_parts)}" if comment_parts else ""
+    return f"{' '.join(parts)}{comment}\n"
+
+
+def render_submodule_overrides(
+    overrides: dict[str, SubmoduleOverride],
+    submodule_order: list[str],
+) -> list[str]:
+    order = {path: index for index, path in enumerate(submodule_order)}
+    lines = [
+        "# Generated by dev/sync-editable-pins.sh --sync-submodules.\n",
+        "# path url rev\n",
+        "\n",
+    ]
+    if not overrides:
+        lines.append("# No submodule overrides are currently needed.\n")
+        return lines
+
+    for path in sorted(overrides, key=lambda value: (order.get(value, len(order)), value)):
+        lines.append(override_line(overrides[path]))
+    return lines
+
+
+def submodule_override_from_pin(pin: SubmodulePin) -> SubmoduleOverride:
+    return SubmoduleOverride(
+        path=pin.path,
+        url=pin.url,
+        rev=pin.rev,
+        remote=pin.remote,
+        branch=pin.branch,
+    )
+
+
+if not submodules_only:
     paths = editable_paths()
     if not paths:
         raise SystemExit(f"no editable paths found in {requirements_file}")
@@ -512,7 +579,7 @@ if not gitmodules_only:
         pyproject_file.write_text("".join(updated), encoding="utf-8")
         print(f"Updated {pyproject_file}")
 
-if sync_gitmodules:
+if sync_submodule_overrides:
     entries = submodule_entries()
     selected = submodule_paths or entries
     selected = [normalize_submodule_path(path) for path in selected]
@@ -521,34 +588,51 @@ if sync_gitmodules:
         raise SystemExit(f"not listed in {gitmodules_file}: {', '.join(unknown)}")
 
     if not selected:
-        print("No changed submodules found for .gitmodules update.")
+        print("No submodules selected for override update.")
     else:
         submodule_pins = [submodule_pin_from_path(path) for path in selected]
-        original_gitmodules = gitmodules_file.read_text(encoding="utf-8").splitlines(keepends=True)
-        updated_gitmodules = update_gitmodules_lines(original_gitmodules, submodule_pins)
+        existing_overrides = read_submodule_overrides()
+        updated_overrides = {
+            path: override
+            for path, override in existing_overrides.items()
+            if path not in selected
+        }
 
         for pin in submodule_pins:
-            print(f"{pin.path}: {pin.remote} -> {pin.url} @ {pin.rev} ({pin.branch})")
+            base_url = gitmodules_url(pin.path)
+            if pin.url == base_url:
+                print(f"{pin.path}: .gitmodules -> {pin.url} @ {pin.rev} ({pin.branch}); no override")
+                continue
+            updated_overrides[pin.path] = submodule_override_from_pin(pin)
+            print(f"{pin.path}: override {pin.remote} -> {pin.url} @ {pin.rev} ({pin.branch})")
 
-        if updated_gitmodules == original_gitmodules:
-            print(f"{gitmodules_file} already up to date.")
+        if submodule_overrides_file.exists():
+            original_overrides = submodule_overrides_file.read_text(
+                encoding="utf-8"
+            ).splitlines(keepends=True)
+        else:
+            original_overrides = []
+        updated_override_lines = render_submodule_overrides(updated_overrides, entries)
+
+        if updated_override_lines == original_overrides:
+            print(f"{submodule_overrides_file} already up to date.")
         elif dry_run:
-            print(f"\nDry run: {gitmodules_file} would change:\n")
+            print(f"\nDry run: {submodule_overrides_file} would change:\n")
             sys.stdout.writelines(
                 difflib.unified_diff(
-                    original_gitmodules,
-                    updated_gitmodules,
-                    fromfile=str(gitmodules_file),
-                    tofile=str(gitmodules_file),
+                    original_overrides,
+                    updated_override_lines,
+                    fromfile=str(submodule_overrides_file),
+                    tofile=str(submodule_overrides_file),
                 )
             )
         else:
-            gitmodules_file.write_text("".join(updated_gitmodules), encoding="utf-8")
-            sync_local_submodule_config(submodule_pins)
-            print(f"Updated {gitmodules_file}")
+            submodule_overrides_file.parent.mkdir(parents=True, exist_ok=True)
+            submodule_overrides_file.write_text("".join(updated_override_lines), encoding="utf-8")
+            print(f"Updated {submodule_overrides_file}")
 PY
 
-if [ "${dry_run}" -eq 0 ] && [ "${gitmodules_only}" -eq 0 ]; then
+if [ "${dry_run}" -eq 0 ] && [ "${submodules_only}" -eq 0 ]; then
   if ! command -v uv >/dev/null 2>&1; then
     echo "uv is required to update uv.lock." >&2
     exit 1
