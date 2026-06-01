@@ -131,9 +131,9 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 core-pinned = [
-    { name = "openarm-driver", git = "https://github.com/stevenaya/openarm_driver.git?rev=de417d889b55a60b071d63e8afb314c9d78b6828" },
-    { name = "openarm-ker", git = "https://github.com/stevenaya/openarm_ker.git?rev=65c99c030798efb414f86bfd6b146f56c6baee6e" },
-    { name = "openarm-mujoco", git = "https://github.com/stevenaya/openarm_mujoco.git?rev=39f7a5b113814f8f4026f621be67e578fb6fc558" },
+    { name = "openarm-driver", git = "https://github.com/enactic/openarm_driver.git?rev=85bd12fe87ee8fa8e2648709df3a692aab2fb308" },
+    { name = "openarm-ker", git = "https://github.com/stevenaya/openarm_ker.git?rev=148cbddaf3c5e2109dc81b22dd030d8cdfd45c44" },
+    { name = "openarm-mujoco", git = "https://github.com/stevenaya/openarm_mujoco.git?rev=fa0eba987dbe16c5b96ec4d076f76d1e29018fe4" },
 ]
 dev-tools = [{ name = "ruff", specifier = "==0.14.11" }]
 
@@ -732,7 +732,7 @@ sdist = { url = "https://files.pythonhosted.org/packages/5f/50/6a86ea825a18e62a6
 [[package]]
 name = "openarm-driver"
 version = "0.1.0"
-source = { git = "https://github.com/stevenaya/openarm_driver.git?rev=de417d889b55a60b071d63e8afb314c9d78b6828#de417d889b55a60b071d63e8afb314c9d78b6828" }
+source = { git = "https://github.com/enactic/openarm_driver.git?rev=85bd12fe87ee8fa8e2648709df3a692aab2fb308#85bd12fe87ee8fa8e2648709df3a692aab2fb308" }
 dependencies = [
     { name = "numpy" },
     { name = "openarm-can" },
@@ -742,7 +742,7 @@ dependencies = [
 [[package]]
 name = "openarm-ker"
 version = "0.1.0"
-source = { git = "https://github.com/stevenaya/openarm_ker.git?rev=65c99c030798efb414f86bfd6b146f56c6baee6e#65c99c030798efb414f86bfd6b146f56c6baee6e" }
+source = { git = "https://github.com/stevenaya/openarm_ker.git?rev=148cbddaf3c5e2109dc81b22dd030d8cdfd45c44#148cbddaf3c5e2109dc81b22dd030d8cdfd45c44" }
 dependencies = [
     { name = "numpy" },
     { name = "openarm-can" },
@@ -753,7 +753,7 @@ dependencies = [
 [[package]]
 name = "openarm-mujoco"
 version = "0.2.0"
-source = { git = "https://github.com/stevenaya/openarm_mujoco.git?rev=39f7a5b113814f8f4026f621be67e578fb6fc558#39f7a5b113814f8f4026f621be67e578fb6fc558" }
+source = { git = "https://github.com/stevenaya/openarm_mujoco.git?rev=fa0eba987dbe16c5b96ec4d076f76d1e29018fe4#fa0eba987dbe16c5b96ec4d076f76d1e29018fe4" }
 dependencies = [
     { name = "mujoco" },
     { name = "numpy" },
