@@ -20,3 +20,6 @@ requirements-local/
 !**/requirements-local/editable.example.txt
 *.html
 tmp/
+test/
+__pycache__/
+*.swp
