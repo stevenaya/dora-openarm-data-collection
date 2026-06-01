@@ -46,6 +46,6 @@ package = false
 
 [tool.uv.sources]
 # Replace these refs with validated commit SHAs when freezing an integration.
-openarm-driver = { git = "https://github.com/stevenaya/openarm_driver.git", rev = "39991e642199368880b6efd5267c51659b55e33c" }
-openarm-ker = { git = "https://github.com/enactic/openarm_ker.git", rev = "b985ff6adbbf62fbc2070cab72b5bb7950bc2bba" }
-openarm-mujoco = { git = "https://github.com/stevenaya/openarm_mujoco.git", rev = "d97595d7501d8396bbfbd1a212a23b278b9b6dbf", subdirectory = "v2" }
+openarm-driver = { git = "https://github.com/stevenaya/openarm_driver.git", rev = "de417d889b55a60b071d63e8afb314c9d78b6828" }
+openarm-ker = { git = "https://github.com/stevenaya/openarm_ker.git", rev = "65c99c030798efb414f86bfd6b146f56c6baee6e" }
+openarm-mujoco = { git = "https://github.com/stevenaya/openarm_mujoco.git", rev = "39f7a5b113814f8f4026f621be67e578fb6fc558" }
