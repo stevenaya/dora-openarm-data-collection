@@ -47,8 +47,7 @@ nodes:
   - id: follower-right
     build: ./scripts/install-node.sh -e nodes/dora-openarm
     path: dora-openarm
-    # args: "--side right --align-trigger gripper --config ../robot_data/config/openarm_cell.yaml"
-    args: "--side right --align-trigger gripper --config nodes/openarm_driver/src/openarm_driver/openarm_cell.yaml"
+    args: "--side right --align-trigger gripper"
     inputs:
       # Event ID is only used. Event value isn't used.
       request_position: ker/follower_position_right
@@ -60,7 +59,7 @@ nodes:
   - id: follower-left
     build: ./scripts/install-node.sh -e nodes/dora-openarm
     path: dora-openarm
-    args: "--side left --align-trigger gripper --config nodes/openarm_driver/src/openarm_driver/openarm_cell.yaml"
+    args: "--side left --align-trigger gripper"
     inputs:
       # Event ID is only used. Event value isn't used.
       request_position: ker/follower_position_left
