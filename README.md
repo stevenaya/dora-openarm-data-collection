@@ -17,6 +17,20 @@ Quick start:
 source scripts/setup-env.sh
 ```
 
+Troubleshooting:
+
+If `openarm-can==1.2.9` fails to build with a CMake error about missing
+`CLI11Config.cmake`, install `openarm-can` first:
+
+```bash
+sudo apt install -y software-properties-common
+sudo add-apt-repository -y ppa:openarm/main
+sudo apt update
+sudo apt install -y \
+  libopenarm-can-dev \
+  openarm-can-utils
+```
+
 For local editable core repositories:
 
 ```bash

@@ -99,6 +99,42 @@ find_uv() {
   return 1
 }
 
+sync_submodules() {
+  local clean_submodules=()
+  local dirty_submodules=()
+  local path
+
+  if [ ! -f "${repo_root}/.gitmodules" ]; then
+    return 0
+  fi
+
+  echo "Syncing submodule URLs..."
+  git submodule sync --recursive
+
+  while IFS= read -r path; do
+    if git -C "${path}" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+      if [ -n "$(git -C "${path}" status --porcelain)" ]; then
+        dirty_submodules+=("${path}")
+        continue
+      fi
+    fi
+    clean_submodules+=("${path}")
+  done < <(git config --file "${repo_root}/.gitmodules" --get-regexp 'submodule\..*\.path' | sed 's/^[^ ]* //')
+
+  if [ "${#dirty_submodules[@]}" -gt 0 ]; then
+    echo "Skipping dirty submodules with uncommitted changes:" >&2
+    for path in "${dirty_submodules[@]}"; do
+      echo "  ${path}" >&2
+    done
+    echo "Commit, stash, or discard those changes before updating them." >&2
+  fi
+
+  if [ "${#clean_submodules[@]}" -gt 0 ]; then
+    echo "Updating clean submodules..."
+    git submodule update --init --recursive -- "${clean_submodules[@]}"
+  fi
+}
+
 uv_bin="$(find_uv)"
 local_requirements=""
 
@@ -115,6 +151,8 @@ python_args=()
 if [ -n "${PYTHON_VERSION:-}" ]; then
   python_args=(-p "${PYTHON_VERSION}")
 fi
+
+sync_submodules
 
 "${uv_bin}" venv --seed --allow-existing "${python_args[@]}"
 
