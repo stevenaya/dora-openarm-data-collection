@@ -128,7 +128,7 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 core-pinned = [
-    { name = "openarm-driver", git = "https://github.com/enactic/openarm_driver.git?rev=0d5870863f653f034d2c5fca9600a477e0ccfd5c" },
+    { name = "openarm-driver", git = "https://github.com/stevenaya/openarm_driver.git?rev=39991e642199368880b6efd5267c51659b55e33c" },
     { name = "openarm-ker", git = "https://github.com/enactic/openarm_ker.git?rev=b985ff6adbbf62fbc2070cab72b5bb7950bc2bba" },
     { name = "openarm-mujoco", git = "https://github.com/stevenaya/openarm_mujoco.git?subdirectory=v2&rev=d97595d7501d8396bbfbd1a212a23b278b9b6dbf" },
 ]
@@ -728,7 +728,7 @@ sdist = { url = "https://files.pythonhosted.org/packages/5f/50/6a86ea825a18e62a6
 [[package]]
 name = "openarm-driver"
 version = "0.1.0"
-source = { git = "https://github.com/enactic/openarm_driver.git?rev=0d5870863f653f034d2c5fca9600a477e0ccfd5c#0d5870863f653f034d2c5fca9600a477e0ccfd5c" }
+source = { git = "https://github.com/stevenaya/openarm_driver.git?rev=39991e642199368880b6efd5267c51659b55e33c#39991e642199368880b6efd5267c51659b55e33c" }
 dependencies = [
     { name = "numpy" },
     { name = "openarm-can" },

@@ -547,3 +547,11 @@ if sync_gitmodules:
             sync_local_submodule_config(submodule_pins)
             print(f"Updated {gitmodules_file}")
 PY
+
+if [ "${dry_run}" -eq 0 ] && [ "${gitmodules_only}" -eq 0 ]; then
+  if ! command -v uv >/dev/null 2>&1; then
+    echo "uv is required to update uv.lock." >&2
+    exit 1
+  fi
+  uv lock --project "${repo_root}"
+fi

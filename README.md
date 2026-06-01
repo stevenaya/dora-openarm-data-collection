@@ -48,6 +48,7 @@ dev/sync-editable-pins.sh
 ```
 
 Use `--dry-run` to preview the `pyproject.toml` changes.
+Without `--dry-run`, the script also runs `uv lock` to refresh `uv.lock`.
 
 ### Real configuration
 
