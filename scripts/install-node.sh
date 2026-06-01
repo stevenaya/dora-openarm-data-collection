@@ -146,8 +146,9 @@ install_node_dependencies() {
     return 0
   fi
 
-  mapfile -t install_deps < <(
-    python3 - "${node_path}" "${overrides}" <<'PY'
+  local deps_file
+  deps_file="$(mktemp)"
+  python3 - "${node_path}" "${overrides}" > "${deps_file}" <<'PY'
 from __future__ import annotations
 
 import re
@@ -167,28 +168,74 @@ overrides = {
 }
 
 
+def normalize(name: str) -> str:
+    return re.sub(r"[-_.]+", "-", name).lower()
+
+
 def requirement_name(spec: str) -> str:
     spec = spec.split(";", 1)[0].strip()
     if " @ " in spec:
         spec = spec.split(" @ ", 1)[0].strip()
     match = re.match(r"^([A-Za-z0-9][A-Za-z0-9_.-]*)", spec)
-    return re.sub(r"[-_.]+", "-", match.group(1)).lower() if match else ""
+    return normalize(match.group(1)) if match else ""
+
+
+def source_requirement(name: str, source: object) -> str | None:
+    if not isinstance(source, dict):
+        return None
+
+    if git_url := source.get("git"):
+        requirement = f"{name} @ git+{git_url}"
+        if rev := source.get("rev"):
+            requirement = f"{requirement}@{rev}"
+        if subdirectory := source.get("subdirectory"):
+            requirement = f"{requirement}#subdirectory={subdirectory}"
+        return requirement
+
+    if path_value := source.get("path"):
+        path = Path(path_value)
+        if not path.is_absolute():
+            path = (node_path / path).resolve()
+        return f"{name} @ file://{path}"
+
+    if url := source.get("url"):
+        return f"{name} @ {url}"
+
+    return None
 
 
 with (node_path / "pyproject.toml").open("rb") as file:
     data = tomllib.load(file)
 
+sources = {
+    normalize(name): source
+    for name, source in data.get("tool", {}).get("uv", {}).get("sources", {}).items()
+}
+
 for dependency in data.get("project", {}).get("dependencies", []):
     name = requirement_name(dependency)
     if name and name in overrides:
         continue
-    print(dependency)
+    print(source_requirement(name, sources.get(name)) or dependency)
 PY
-  )
+  mapfile -t install_deps < "${deps_file}"
+  rm -f "${deps_file}"
 
   if [ "${#install_deps[@]}" -gt 0 ]; then
     uv pip install "${python_args[@]}" --project "${node_path}" "${install_deps[@]}"
   fi
+}
+
+install_parent_requirements_file() {
+  if [ -z "${DORA_PARENT_REQUIREMENTS_FILE:-}" ]; then
+    return 0
+  fi
+  if [ ! -f "${DORA_PARENT_REQUIREMENTS_FILE}" ]; then
+    echo "missing ${DORA_PARENT_REQUIREMENTS_FILE}" >&2
+    echo "run scripts/setup-env.sh before building nodes with local editable overrides" >&2
+    exit 1
+  fi
+  uv pip install "${python_args[@]}" --project "${repo_root}" -r "${DORA_PARENT_REQUIREMENTS_FILE}"
 }
 
 if [ -z "${overrides}" ] && { [ -z "${node_override_file}" ] || [ "${force_local_nodes}" -eq 1 ]; }; then
@@ -234,14 +281,7 @@ for group in ${DORA_PARENT_DEP_GROUPS:-}; do
   uv pip install "${python_args[@]}" --project "${repo_root}" --group "${group}"
 done
 
-if [ -n "${DORA_PARENT_REQUIREMENTS_FILE:-}" ]; then
-  if [ ! -f "${DORA_PARENT_REQUIREMENTS_FILE}" ]; then
-    echo "missing ${DORA_PARENT_REQUIREMENTS_FILE}" >&2
-    echo "run scripts/setup-env.sh before building nodes with local editable overrides" >&2
-    exit 1
-  fi
-  uv pip install "${python_args[@]}" --project "${repo_root}" -r "${DORA_PARENT_REQUIREMENTS_FILE}"
-fi
+install_parent_requirements_file
 
 for node_input in "$@"; do
   node_path="$(resolve_node_path "${node_input}" || true)"
@@ -251,6 +291,7 @@ for node_input in "$@"; do
     IFS=$'\t' read -r override_path override_url override_rev <<< "${override_spec}"
     if [ -n "${node_path}" ]; then
       install_node_dependencies "${node_path}"
+      install_parent_requirements_file
     else
       echo "warning: ${override_path} is installed from a remote override without local dependency filtering" >&2
     fi
@@ -264,5 +305,6 @@ for node_input in "$@"; do
   fi
 
   install_node_dependencies "${node_path}"
+  install_parent_requirements_file
   uv pip install "${python_args[@]}" --no-deps -e "${node_path}"
 done
