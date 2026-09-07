@@ -18,16 +18,17 @@ nodes:
     path: dora-openarm-data-collection-ui
     env:
       METADATA_FILE: "metadata.yaml"
+      LAUNCHER_URL: "http://127.0.0.1:8080/"
     inputs:
       tick: dora/timer/secs/1
       button_a:
-        source: udp-receiver/button_a
+        source: quittable-webxr/button_a
         queue_size: 100
       button_b:
-        source: udp-receiver/button_b
+        source: quittable-webxr/button_b
         queue_size: 100
       vr_receive_times:
-        source: udp-receiver/vr_receive_times
+        source: quittable-webxr/vr_receive_times
         queue_size: 100
       camera_wrist_right:
         source: camera-wrist-right/image
@@ -57,37 +58,84 @@ nodes:
     path: dora-openarm-quitter
     inputs:
       command: ui/command
-      # tick: dora/timer/millis/200 # 5Hz
       tick: dora/timer/millis/33 # 30fps
     outputs:
       - tick
 
-  - id: quittable-tick-leader
-    build: pip install -e nodes/dora-openarm-quitter
-    path: dora-openarm-quitter
+  - id: webxr
+    build: pip install -e nodes/dora-openarm-webxr
+    path: dora-openarm-webxr
+    env:
+      TLS_CERTIFICATE_FILE: "nodes/dora-openarm-webxr/example/server.crt"
+      TLS_KEY_FILE: "nodes/dora-openarm-webxr/example/server.key"
+      VIEW_CONFIGURATION_FILE: "view-webxr.yaml"
     inputs:
-      command: ui/command
       tick: dora/timer/millis/2
-    outputs:
-      - tick
-
-  - id: udp-receiver
-    build: pip install -e nodes/dora-openarm-vr
-    path: dora-openarm-quest-receiver
-    args: "--host 0.0.0.0 --port 5006"
-    inputs:
-      tick: quittable-tick-leader/tick
+      camera_head_right:
+        source: camera-head-stereo-splitter/image_1
+        queue_size: 1
+      camera_head_left:
+        source: camera-head-stereo-splitter/image_0
+        queue_size: 1
     outputs:
       - pose_right
       - trigger_right
       - pose_left
       - trigger_left
+      - grip_right
+      - grip_left
+      - joystick_x_right
+      - joystick_y_right
+      - joystick_x_left
       - joystick_y_left
       - button_a
       - button_b
       - button_x
+      - button_y
       - status
       - vr_receive_times
+      - pose_reference
+
+  - id: quittable-webxr
+    build: pip install -e nodes/dora-openarm-quitter
+    path: dora-openarm-quitter
+    inputs:
+      command: ui/command
+      pose_right: webxr/pose_right
+      trigger_right: webxr/trigger_right
+      pose_left: webxr/pose_left
+      trigger_left: webxr/trigger_left
+      grip_right: webxr/grip_right
+      grip_left: webxr/grip_left
+      joystick_x_right: webxr/joystick_x_right
+      joystick_y_right: webxr/joystick_y_right
+      joystick_x_left: webxr/joystick_x_left
+      joystick_y_left: webxr/joystick_y_left
+      button_a: webxr/button_a
+      button_b: webxr/button_b
+      button_x: webxr/button_x
+      button_y: webxr/button_y
+      status: webxr/status
+      vr_receive_times: webxr/vr_receive_times
+      pose_reference: webxr/pose_reference
+    outputs:
+      - pose_right
+      - trigger_right
+      - pose_left
+      - trigger_left
+      - grip_right
+      - grip_left
+      - joystick_x_right
+      - joystick_y_right
+      - joystick_x_left
+      - joystick_y_left
+      - button_a
+      - button_b
+      - button_x
+      - button_y
+      - status
+      - vr_receive_times
+      - pose_reference
 
   - id: ik
     build: pip install -e nodes/dora-openarm-kinematics
@@ -97,11 +145,10 @@ nodes:
       --max-iters 5 --damping 0.1
       --posture-cost 0 --lm-damping 0.01 --limit-velocity
     inputs:
-      tick: quittable-tick-leader/tick
-      target_right: udp-receiver/pose_right
-      target_left: udp-receiver/pose_left
-      trigger_right: udp-receiver/trigger_right
-      trigger_left: udp-receiver/trigger_left
+      target_right: quittable-webxr/pose_right
+      target_left: quittable-webxr/pose_left
+      trigger_right: quittable-webxr/trigger_right
+      trigger_left: quittable-webxr/trigger_left
     outputs:
       - position_left
       - position_right
@@ -130,16 +177,16 @@ nodes:
     inputs:
       position_left: ik/position_left
       position_right: ik/position_right
-      pose_right: udp-receiver/pose_right
-      pose_left: udp-receiver/pose_left
-      joystick_y: udp-receiver/joystick_y_left
+      pose_right: quittable-webxr/pose_right
+      pose_left: quittable-webxr/pose_left
+      joystick_y: quittable-webxr/joystick_y_left
     outputs:
       - status
 
   - id: follower-right
     build: pip install -e nodes/dora-openarm
     path: dora-openarm
-    args: "--side right --align-trigger gripper"
+    args: "--side right --align-trigger gripper --config openarm_cell_higher_pd.yaml"
     inputs:
       # Event ID is only used. Event value isn't used.
       request_state: ik/position_right
@@ -152,7 +199,7 @@ nodes:
   - id: follower-left
     build: pip install -e nodes/dora-openarm
     path: dora-openarm
-    args: "--side left --align-trigger gripper"
+    args: "--side left --align-trigger gripper --config openarm_cell_higher_pd.yaml"
     inputs:
       request_state: ik/position_left
       move_position: ik/position_left
@@ -165,7 +212,7 @@ nodes:
     build: pip install -e nodes/dora-openarm-cell-lifter
     path: dora-openarm-cell-lifter
     inputs:
-      joystick_y: udp-receiver/joystick_y_left
+      joystick_y: quittable-webxr/joystick_y_left
     outputs:
       - elevation_observation
       - elevation_action
@@ -235,7 +282,7 @@ nodes:
     path: dora-openarm-dataset-recorder
     env:
       METADATA_FILE: "metadata.yaml"
-      DIRECTORY: "vr_data"
+      DIRECTORY: "webxr_data"
     inputs:
       command: ui/command
       arm_right_action: ik/position_right
