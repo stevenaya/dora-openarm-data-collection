@@ -35,10 +35,15 @@ jobs:
         with:
           version: '0.12.15'
           enable-cache: true
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcli11-dev
       - name: Install
         run: |
           uv sync --locked
       - name: Up
+        id: up
         run: |
           uv run --no-sync dora up
       - name: Run
@@ -58,7 +63,7 @@ jobs:
           curl -X POST http://127.0.0.1:8000/quit
           wait
       - name: Down
-        if: always()
+        if: ${{ always() && steps.up.outcome == 'success' }}
         run: |
           uv run --no-sync dora down --force
       - uses: actions/upload-artifact@v7
