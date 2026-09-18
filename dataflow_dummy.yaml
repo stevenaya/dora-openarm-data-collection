@@ -16,7 +16,7 @@ nodes:
   - id: ui
     path: dora-openarm-data-collection-ui
     env:
-      METADATA_FILE: "metadata.yaml"
+      METADATA_FILE: "metadata_dummy.yaml"
     inputs:
       # We need at least one input to keep this node alive.
       tick: dora/timer/secs/1
@@ -125,7 +125,7 @@ nodes:
   - id: recorder
     path: dora-openarm-dataset-recorder
     env:
-      METADATA_FILE: "metadata.yaml"
+      METADATA_FILE: "metadata_dummy.yaml"
     inputs:
       command: ui/command
       arm_right_action: leader/follower_position_right

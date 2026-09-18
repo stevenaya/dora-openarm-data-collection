@@ -70,6 +70,15 @@ nodes:
       - follower_position_right
       - metadata
 
+  - id: lifter
+    path: dora-openarm-cell-lifter
+    inputs:
+      # Tick-only: use the built-in calibration and hold behavior.
+      tick: quittable-tick-leader/tick
+    outputs:
+      - elevation_observation
+      - elevation_action
+
   - id: follower-right
     path: dora-openarm
     args: "--side right --align-trigger gripper --config openarm_cell_higher_pd_zero_offset"
@@ -182,3 +191,5 @@ nodes:
       camera_head_right: camera-head-stereo-splitter/image_1
       camera_ceiling: camera-ceiling/image
       ker_metadata: leader/metadata
+      elevation_action: lifter/elevation_action
+      elevation_observation: lifter/elevation_observation

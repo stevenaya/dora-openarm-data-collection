@@ -49,11 +49,23 @@ See [uv's synchronization rules](https://docs.astral.sh/uv/concepts/projects/syn
 
 ## Configurations
 
-[`metadata.yaml`](metadata.yaml) is metadata used by configurations with real cameras. [`metadata_mujoco.yaml`](metadata_mujoco.yaml) is metadata used by configurations that render cameras with MuJoCo.
+Each dataflow uses the same metadata file for its UI and recorder:
+
+| Dataflows | Metadata | Recorded equipment |
+|---|---|---|
+| KER, VR, WebXR (real Cell) | [`metadata.yaml`](metadata.yaml) | Arms, lifter, five cameras |
+| VR/WebXR MuJoCo | [`metadata_mujoco.yaml`](metadata_mujoco.yaml) | Arms, five simulated cameras |
+| Pedestal | [`metadata_pedestal.yaml`](metadata_pedestal.yaml) | Arms only |
+| Dummy | [`metadata_dummy.yaml`](metadata_dummy.yaml) | Arms, four dummy cameras (`head` is a single stream) |
 
 ### KER configuration
 
 [`dataflow-ker.yaml`](dataflow-ker.yaml) is a configuration for leader-follower teleoperation with real OpenArm units and cameras. A [KER](https://github.com/enactic/dora-openarm-ker) leader arm controls the follower arms while wrist, head and ceiling cameras are recorded.
+
+The Cell lifter receives the shared 250 Hz tick and records its elevation action
+and observation in millimeters. It uses its built-in startup calibration and hold
+behavior; this flow has no interactive lift control input. A real lifter is
+required on `can2` by default, and startup enables and moves it for calibration.
 
 ### VR configuration
 

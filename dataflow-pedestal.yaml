@@ -16,7 +16,7 @@ nodes:
   - id: ui
     path: dora-openarm-data-collection-ui
     env:
-      METADATA_FILE: "metadata.yaml"
+      METADATA_FILE: "metadata_pedestal.yaml"
     inputs:
       tick: dora/timer/secs/1
       button_a:
@@ -123,7 +123,7 @@ nodes:
   - id: recorder
     path: dora-openarm-dataset-recorder
     env:
-      METADATA_FILE: "metadata.yaml"
+      METADATA_FILE: "metadata_pedestal.yaml"
       DIRECTORY: "pedestal_data"
     inputs:
       command: ui/command
