@@ -14,7 +14,6 @@
 
 nodes:
   - id: ui
-    build: pip install -e nodes/dora-openarm-data-collection-ui
     path: dora-openarm-data-collection-ui
     env:
       METADATA_FILE: "metadata.yaml"
@@ -54,7 +53,6 @@ nodes:
       - arm_command
 
   - id: quittable-tick-camera
-    build: pip install -e nodes/dora-openarm-quitter
     path: dora-openarm-quitter
     inputs:
       command: ui/command
@@ -63,7 +61,6 @@ nodes:
       - tick
 
   - id: webxr
-    build: pip install -e nodes/dora-openarm-webxr
     path: dora-openarm-webxr
     env:
       TLS_CERTIFICATE_FILE: "nodes/dora-openarm-webxr/example/server.crt"
@@ -97,7 +94,6 @@ nodes:
       - pose_reference
 
   - id: quittable-webxr
-    build: pip install -e nodes/dora-openarm-quitter
     path: dora-openarm-quitter
     inputs:
       command: ui/command
@@ -138,9 +134,6 @@ nodes:
       - pose_reference
 
   - id: ik
-    build: pip install -e nodes/dora-openarm-kinematics
-    # Debug lib/: comment the build above and uncomment the next line.
-    # build: pip install -e lib/openarm_mujoco -e lib/openarm_control -e nodes/dora-openarm-kinematics
     path: dora-openarm-ik
     args: >-
       --mode bimanual --tick-hz 250
@@ -157,7 +150,6 @@ nodes:
       - status
 
   - id: camera-wrist-right
-    build: pip install opencv-video-capture
     path: opencv-video-capture
     env:
       # Please configure!
@@ -173,9 +165,6 @@ nodes:
 
   # ── MuJoCo viewer  ──
   - id: mujoco-viewer
-    build: pip install -e nodes/dora-openarm-mujoco
-    # Debug lib/: comment the build above and uncomment the next line.
-    # build: pip install -e lib/openarm_mujoco -e nodes/dora-openarm-mujoco
     path: dora-openarm-mujoco
     args: "--keyframe home --viewer --debug-frames"
     inputs:
@@ -188,11 +177,8 @@ nodes:
       - status
 
   - id: follower-right
-    build: pip install -e nodes/dora-openarm "openarm-driver>=0.5.0"
-    # Debug lib/: comment the build above and uncomment the next line.
-    # build: pip install -e lib/openarm_can/python -e lib/openarm_driver -e nodes/dora-openarm
     path: dora-openarm
-    args: "--side right --align-trigger gripper --config openarm_cell_higher_pd_zero_offset.yaml"
+    args: "--side right --align-trigger gripper --config openarm_cell_higher_pd_zero_offset"
     inputs:
       # Event ID is only used. Event value isn't used.
       request_state: ik/position_right
@@ -203,11 +189,8 @@ nodes:
       - status
 
   - id: follower-left
-    build: pip install -e nodes/dora-openarm "openarm-driver>=0.5.0"
-    # Debug lib/: comment the build above and uncomment the next line.
-    # build: pip install -e lib/openarm_can/python -e lib/openarm_driver -e nodes/dora-openarm
     path: dora-openarm
-    args: "--side left --align-trigger gripper --config openarm_cell_higher_pd_zero_offset.yaml"
+    args: "--side left --align-trigger gripper --config openarm_cell_higher_pd_zero_offset"
     inputs:
       request_state: ik/position_left
       move_position: ik/position_left
@@ -217,9 +200,6 @@ nodes:
       - status
 
   - id: lifter
-    build: pip install -e nodes/dora-openarm-cell-lifter
-    # Debug lib/: comment the build above and uncomment the next line.
-    # build: pip install -e lib/openarm_can/python -e nodes/dora-openarm-cell-lifter
     path: dora-openarm-cell-lifter
     inputs:
       joystick_y: quittable-webxr/joystick_y_left
@@ -228,7 +208,6 @@ nodes:
       - elevation_action
 
   - id: camera-wrist-left
-    build: pip install opencv-video-capture
     path: opencv-video-capture
     env:
       # Please configure!
@@ -243,7 +222,6 @@ nodes:
       - image
 
   - id: camera-head-stereo
-    build: pip install opencv-video-capture
     path: opencv-video-capture
     env:
       # Please configure!
@@ -258,7 +236,6 @@ nodes:
       - image
 
   - id: camera-head-stereo-splitter
-    build: pip install -e nodes/dora-opencv-image-splitter
     path: dora-opencv-image-splitter
     env:
       SPLIT_MODE: "vertical"
@@ -273,7 +250,6 @@ nodes:
       - image_1
 
   - id: camera-ceiling
-    build: pip install opencv-video-capture
     path: opencv-video-capture
     env:
       # Please configure!
@@ -288,7 +264,6 @@ nodes:
       - image
 
   - id: recorder
-    build: pip install -e nodes/dora-openarm-dataset-recorder
     path: dora-openarm-dataset-recorder
     env:
       METADATA_FILE: "metadata.yaml"

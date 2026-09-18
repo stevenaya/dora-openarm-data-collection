@@ -14,7 +14,6 @@
 
 nodes:
   - id: ui
-    build: pip install -e nodes/dora-openarm-data-collection-ui
     path: dora-openarm-data-collection-ui
     env:
       METADATA_FILE: "metadata.yaml"
@@ -38,7 +37,6 @@ nodes:
       - arm_command
 
   - id: quittable-tick-leader
-    build: pip install -e nodes/dora-openarm-quitter
     path: dora-openarm-quitter
     inputs:
       command: ui/command
@@ -47,7 +45,6 @@ nodes:
       - tick
 
   - id: webxr
-    build: pip install -e nodes/dora-openarm-webxr
     path: dora-openarm-webxr
     env:
       TLS_CERTIFICATE_FILE: "nodes/dora-openarm-webxr/example/server.crt" # generate via nodes/dora-openarm-webxr/example/prepare_tls.sh
@@ -72,9 +69,6 @@ nodes:
       - pose_reference
 
   - id: ik
-    build: pip install -e nodes/dora-openarm-kinematics
-    # Debug lib/: comment the build above and uncomment the next line.
-    # build: pip install -e lib/openarm_mujoco -e lib/openarm_control -e nodes/dora-openarm-kinematics
     path: dora-openarm-ik
     args: >-
       --mode bimanual --tick-hz 250
@@ -92,9 +86,6 @@ nodes:
 
   # ── MuJoCo viewer  ──
   - id: mujoco-viewer
-    build: pip install -e nodes/dora-openarm-mujoco
-    # Debug lib/: comment the build above and uncomment the next line.
-    # build: pip install -e lib/openarm_mujoco -e nodes/dora-openarm-mujoco
     path: dora-openarm-mujoco
     args: "--scene pedestal --keyframe home --viewer --debug-frames"
     inputs:
@@ -107,9 +98,6 @@ nodes:
       - status
 
   - id: follower-right
-    build: pip install -e nodes/dora-openarm "openarm-driver>=0.5.0"
-    # Debug lib/: comment the build above and uncomment the next line.
-    # build: pip install -e lib/openarm_can/python -e lib/openarm_driver -e nodes/dora-openarm
     path: dora-openarm
     args: "--side right --align-trigger gripper --config openarm_pedestal"
     inputs:
@@ -122,9 +110,6 @@ nodes:
       - status
 
   - id: follower-left
-    build: pip install -e nodes/dora-openarm "openarm-driver>=0.5.0"
-    # Debug lib/: comment the build above and uncomment the next line.
-    # build: pip install -e lib/openarm_can/python -e lib/openarm_driver -e nodes/dora-openarm
     path: dora-openarm
     args: "--side left --align-trigger gripper --config openarm_pedestal"
     inputs:
@@ -136,7 +121,6 @@ nodes:
       - status
 
   - id: recorder
-    build: pip install -e nodes/dora-openarm-dataset-recorder
     path: dora-openarm-dataset-recorder
     env:
       METADATA_FILE: "metadata.yaml"

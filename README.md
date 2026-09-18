@@ -9,37 +9,42 @@ then run the following from the repository root after cloning:
 
 ```bash
 git submodule update --init --recursive
-uv sync
+uv sync --locked
 source .venv/bin/activate
 ```
 
-[`pyproject.toml`](pyproject.toml) selects Python 3.12 and Dora CLI 1.0.1.
+[`pyproject.toml`](pyproject.toml) selects Python 3.12, Dora CLI 1.0.1,
+and all node dependencies, including `openarm-driver>=0.5.1`.
 uv creates `.venv` in this repository and downloads a compatible Python if needed;
-no `.python-version` file is required. The parent project only manages the build
-tool environment and is not installed as a Python package.
+no `.python-version` file is required. Nodes under `nodes/` are installed editable,
+so Python source edits take effect after restarting the node. The parent project
+manages the shared environment and is not installed as a Python package.
 
-Build and run the desired dataflow from the same activated shell. For example,
+Run the desired dataflow from the same activated shell. For example,
 to use WebXR with MuJoCo (no real arms required):
 
 ```bash
-dora build dataflow-webxr-mujoco.yaml --uv
 ./nodes/dora-openarm-webxr/example/prepare_tls.sh "$(hostname).local"
 dora run dataflow-webxr-mujoco.yaml --uv
 ```
 
 See the WebXR section below for browser URLs and TLS details. Other dataflows
-use the same `dora build <dataflow>.yaml --uv` and
-`dora run <dataflow>.yaml --uv` commands, with their own hardware prerequisites.
+use `dora run <dataflow>.yaml --uv`, with their own hardware prerequisites.
+The root dataflows have no package-installing `build` commands; `uv sync --locked`
+installs their dependencies, so a separate `dora build` step is not needed.
 
-The current dataflows install node packages into the shared root `.venv` via
-their `build` commands. `uv.lock` locks the parent tool dependencies, not the
-node dependencies installed by Dora. In each new terminal, run
+[`uv.lock`](uv.lock) locks the resolved dependency versions. Editable node source
+revisions are pinned by this repository's Git submodule commits; the lockfile
+does not freeze uncommitted source changes. In each new terminal, run
 `source .venv/bin/activate` before invoking `dora` so that it uses this project's
 CLI rather than another program with the same name.
 
-After building nodes, use `uv sync --inexact` instead of plain `uv sync` when
-updating the tool environment. Plain `uv sync` removes packages not declared
-by the parent project; if that happens, run the dataflow build again.
+Use `uv sync --locked` after pulling updates. It refuses to change an outdated
+lockfile and removes packages outside the managed dependency set. To intentionally
+update a dependency, run `uv lock --upgrade-package <package>`, then
+`uv sync --locked`, test, and commit the lockfile. After changing dependency
+declarations or node submodule revisions, run `uv lock` and commit any resulting
+lockfile changes along with the TOML or submodule changes.
 See [uv's synchronization rules](https://docs.astral.sh/uv/concepts/projects/sync/).
 
 ## Configurations
@@ -63,7 +68,6 @@ See [uv's synchronization rules](https://docs.astral.sh/uv/concepts/projects/syn
 WebXR requires HTTPS, so a TLS certificate is needed. A self-signed certificate is enough; see the [dora-openarm-webxr setup instructions](https://github.com/enactic/dora-openarm-webxr#setup) for how to generate one. Then run:
 
 ```bash
-dora build dataflow-webxr-mujoco.yaml --uv
 ./nodes/dora-openarm-webxr/example/prepare_tls.sh $(hostname).local
 dora run dataflow-webxr-mujoco.yaml --uv
 ```
@@ -79,24 +83,28 @@ Open http://localhost:8000/ on the local machine for the data collection UI, and
 The OpenArm-specific dependency repositories are checked out under [`lib/`](lib/README.md).
 Initialize them with `git submodule update --init --recursive`.
 
-Relevant nodes in the dataflows include a commented `build` alternative that
-installs their underlying libraries with `-e`. To debug changes in `lib/`,
-comment out that node's normal `build` line and uncomment the `lib/` alternative.
-Keep only one active `build` entry per node. For example:
+Libraries normally come from the package index at the versions in `uv.lock`.
+To use an editable library checkout, run the command for the library you need
+from the repository root:
 
-```yaml
-    # build: pip install -e nodes/dora-openarm-kinematics
-    build: pip install -e lib/openarm_mujoco -e lib/openarm_control -e nodes/dora-openarm-kinematics
+```bash
+uv add --editable lib/openarm_driver
+# Other optional library checkouts:
+# uv add --editable lib/openarm_can/python
+# uv add --editable lib/openarm_ker
+# uv add --editable lib/openarm_control
+# uv add --editable lib/openarm_mujoco
 ```
 
-Run `dora build <dataflow>.yaml --uv` again from the repository root, then restart
-the dataflow. The alternative includes the node and its OpenArm dependency chain
-in the same installation command. CAN bindings use `lib/openarm_can/python`;
-changes to their C++ code require rebuilding.
+`uv add --editable` updates the parent dependency declaration, adds a local path
+under `[tool.uv.sources]`, updates the lockfile, and syncs the environment.
+Restart the dataflow after editing Python code. CAN bindings use
+`lib/openarm_can/python`; changes to their C++ code require rebuilding.
 
-Commenting the alternative out again does not uninstall an existing editable
-library. Recreate the environment or explicitly reinstall released packages
-when switching back to package-index dependencies.
+To return to the package-index version, remove that library's entry from
+`[tool.uv.sources]`, then run `uv lock` and `uv sync --locked`. Keep required
+version constraints such as `openarm-driver>=0.5.1`. Avoid separate `uv pip install`
+commands for managed dependencies, since they bypass the project lockfile.
 
 ## License
 

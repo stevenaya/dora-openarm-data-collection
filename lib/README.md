@@ -1,22 +1,22 @@
 # OpenArm Libraries
 
 These submodules contain the OpenArm-specific libraries used by `nodes/`.
-They are pinned to the official release tags listed below for local development.
-General dependencies such as NumPy, PyArrow, and the MuJoCo engine remain
-managed by the Python package manager.
+The release baselines below are for local development; the parent repository's
+Git submodule commits identify the exact source revisions. Installed library
+versions, along with general dependencies such as NumPy, PyArrow, and the MuJoCo
+engine, are managed by the parent `pyproject.toml` and `uv.lock`.
 
 | Repository | Release tag | Python package directory | Used by |
 |---|---|---|---|
-| [openarm_driver](openarm_driver) | `0.5.0` | `lib/openarm_driver` | `dora-openarm` |
+| [openarm_driver](openarm_driver) | `0.5.1` | `lib/openarm_driver` | `dora-openarm` |
 | [openarm_can](openarm_can) | `1.4.0` | `lib/openarm_can/python` | `openarm_driver`, `openarm_ker`, `dora-openarm-cell-lifter` |
 | [openarm_ker](openarm_ker) | `0.3.0` | `lib/openarm_ker` | `dora-openarm-ker` |
 | [openarm_control](openarm_control) | `0.4.0` | `lib/openarm_control` | `dora-openarm-kinematics` |
 | [openarm_mujoco](openarm_mujoco) | `2.3.0` | `lib/openarm_mujoco` | `openarm_control`, `dora-openarm-mujoco` |
 
-Node dependencies use version ranges, so future package-index resolutions may
-select newer releases, while an existing environment may retain an already
-installed compatible version. Refresh these submodule pins when updating the
-dependency baseline; the pins do not constrain ordinary package-index installs.
+`uv sync --locked` installs the package-index versions recorded in `uv.lock`.
+Refresh these submodule pins when updating the dependency baseline; the pins
+only select installed library sources when an editable path is configured.
 
 Initialize the source checkouts from the repository root:
 
@@ -24,19 +24,17 @@ Initialize the source checkouts from the repository root:
 git submodule update --init --recursive
 ```
 
-Adding these submodules does not automatically change the existing dataflow
-build commands to use local library sources. To debug a library through a
-dataflow, comment out the relevant node's normal `build` line and uncomment its
-`lib/` alternative, then rebuild and restart the dataflow. See the parent
-[README](../README.md#debugging-openarm-libraries) for details.
-
-Alternatively, install all library checkouts explicitly from the repository root:
+To debug a library, add its checkout as an editable project dependency from the
+repository root. Choose only the libraries you need:
 
 ```bash
-uv pip install --python .venv/bin/python \
-  -e lib/openarm_can/python \
-  -e lib/openarm_driver \
-  -e lib/openarm_ker \
-  -e lib/openarm_mujoco \
-  -e lib/openarm_control
+uv add --editable lib/openarm_driver
+# uv add --editable lib/openarm_can/python
+# uv add --editable lib/openarm_ker
+# uv add --editable lib/openarm_control
+# uv add --editable lib/openarm_mujoco
 ```
+
+This updates the parent's TOML, lockfile, and environment without editing the
+dataflows. See the parent [README](../README.md#debugging-openarm-libraries) for
+switching back to released packages and rebuilding C++ bindings.

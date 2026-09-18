@@ -14,7 +14,6 @@
 
 nodes:
   - id: ui
-    build: pip install -e nodes/dora-openarm-data-collection-ui
     path: dora-openarm-data-collection-ui
     env:
       METADATA_FILE: "metadata_mujoco.yaml"
@@ -33,7 +32,6 @@ nodes:
       - command
 
   - id: quittable-tick-leader
-    build: pip install -e nodes/dora-openarm-quitter
     path: dora-openarm-quitter
     inputs:
       command: ui/command
@@ -51,7 +49,6 @@ nodes:
       - camera_head_left
 
   - id: webxr
-    build: pip install -e nodes/dora-openarm-webxr
     path: dora-openarm-webxr
     env:
       TLS_CERTIFICATE_FILE: "nodes/dora-openarm-webxr/example/server.crt" # generate via nodes/dora-openarm-webxr/example/prepare_tls.sh
@@ -85,9 +82,6 @@ nodes:
       - pose_reference
 
   - id: ik
-    build: pip install -e nodes/dora-openarm-kinematics
-    # Debug lib/: comment the build above and uncomment the next line.
-    # build: pip install -e lib/openarm_mujoco -e lib/openarm_control -e nodes/dora-openarm-kinematics
     path: dora-openarm-ik
     args: >-
       --mode bimanual --tick-hz 250
@@ -105,9 +99,6 @@ nodes:
 
   # ── MuJoCo viewer (replaces follower-right, follower-left, and all cameras) ──
   - id: mujoco-collect
-    build: pip install -e nodes/dora-openarm-mujoco
-    # Debug lib/: comment the build above and uncomment the next line.
-    # build: pip install -e lib/openarm_mujoco -e nodes/dora-openarm-mujoco
     path: dora-openarm-mujoco
     args: "--scene demo --keyframe home --enable-collision --ctrl --viewer --render --debug-frames"
     inputs:
@@ -129,7 +120,6 @@ nodes:
       - camera_ceiling
 
   - id: recorder
-    build: pip install -e nodes/dora-openarm-dataset-recorder
     path: dora-openarm-dataset-recorder
     env:
       METADATA_FILE: "metadata_mujoco.yaml"

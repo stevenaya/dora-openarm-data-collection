@@ -14,8 +14,6 @@
 
 nodes:
   - id: ui
-    build: pip install -e nodes/dora-openarm-data-collection-ui
-    # build: pip install dora-openarm-data-collection-ui
     path: dora-openarm-data-collection-ui
     env:
       METADATA_FILE: "metadata.yaml"
@@ -46,7 +44,6 @@ nodes:
       - arm_command
 
   - id: quittable-tick-leader
-    build: pip install -e nodes/dora-openarm-quitter
     path: dora-openarm-quitter
     inputs:
       command: ui/command
@@ -56,7 +53,6 @@ nodes:
       - tick
 
   - id: quittable-tick-camera
-    build: pip install -e nodes/dora-openarm-quitter
     path: dora-openarm-quitter
     inputs:
       command: ui/command
@@ -66,9 +62,6 @@ nodes:
       - tick
 
   - id: leader
-    build: pip install -e nodes/dora-openarm-ker
-    # Debug lib/: comment the build above and uncomment the next line.
-    # build: pip install -e lib/openarm_can/python -e lib/openarm_ker -e nodes/dora-openarm-ker
     path: dora-openarm-ker
     inputs:
       tick: quittable-tick-leader/tick
@@ -78,11 +71,8 @@ nodes:
       - metadata
 
   - id: follower-right
-    build: pip install -e nodes/dora-openarm "openarm-driver>=0.5.0"
-    # Debug lib/: comment the build above and uncomment the next line.
-    # build: pip install -e lib/openarm_can/python -e lib/openarm_driver -e nodes/dora-openarm
     path: dora-openarm
-    args: "--side right --align-trigger gripper --config openarm_cell_higher_pd_zero_offset.yaml"
+    args: "--side right --align-trigger gripper --config openarm_cell_higher_pd_zero_offset"
     inputs:
       # Event ID is only used. Event value isn't used.
       request_state: leader/follower_position_right
@@ -93,7 +83,6 @@ nodes:
       - status
 
   - id: camera-wrist-right
-    build: pip install opencv-video-capture
     path: opencv-video-capture
     env:
       # Please configure!
@@ -108,11 +97,8 @@ nodes:
       - image
 
   - id: follower-left
-    build: pip install -e nodes/dora-openarm "openarm-driver>=0.5.0"
-    # Debug lib/: comment the build above and uncomment the next line.
-    # build: pip install -e lib/openarm_can/python -e lib/openarm_driver -e nodes/dora-openarm
     path: dora-openarm
-    args: "--side left --align-trigger gripper --config openarm_cell_higher_pd_zero_offset.yaml"
+    args: "--side left --align-trigger gripper --config openarm_cell_higher_pd_zero_offset"
     inputs:
       # Event ID is only used. Event value isn't used.
       request_state: leader/follower_position_left
@@ -123,7 +109,6 @@ nodes:
       - status
 
   - id: camera-wrist-left
-    build: pip install opencv-video-capture
     path: opencv-video-capture
     env:
       # Please configure!
@@ -138,7 +123,6 @@ nodes:
       - image
 
   - id: camera-head-stereo
-    build: pip install opencv-video-capture
     path: opencv-video-capture
     env:
       # Please configure!
@@ -153,7 +137,6 @@ nodes:
       - image
 
   - id: camera-head-stereo-splitter
-    build: pip install -e nodes/dora-opencv-image-splitter
     path: dora-opencv-image-splitter
     env:
       SPLIT_MODE: "vertical"
@@ -168,7 +151,6 @@ nodes:
       - image_1
 
   - id: camera-ceiling
-    build: pip install opencv-video-capture
     path: opencv-video-capture
     env:
       # Please configure!
@@ -183,7 +165,6 @@ nodes:
       - image
 
   - id: recorder
-    build: pip install -e nodes/dora-openarm-dataset-recorder
     path: dora-openarm-dataset-recorder
     env:
       METADATA_FILE: "metadata.yaml"

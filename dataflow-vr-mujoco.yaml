@@ -14,7 +14,6 @@
 
 nodes:
   - id: ui
-    build: pip install -e nodes/dora-openarm-data-collection-ui
     path: dora-openarm-data-collection-ui
     env:
       METADATA_FILE: "metadata_mujoco.yaml"
@@ -33,7 +32,6 @@ nodes:
       - command
 
   - id: quittable-tick-leader
-    build: pip install -e nodes/dora-openarm-quitter
     path: dora-openarm-quitter
     inputs:
       command: ui/command
@@ -42,7 +40,6 @@ nodes:
       - tick
 
   - id: udp-receiver
-    build: pip install -e nodes/dora-openarm-vr
     path: dora-openarm-quest-receiver
     args: "--host 0.0.0.0 --port 5006"
     inputs:
@@ -60,9 +57,6 @@ nodes:
       - vr_receive_times
 
   - id: ik
-    build: pip install -e nodes/dora-openarm-kinematics
-    # Debug lib/: comment the build above and uncomment the next line.
-    # build: pip install -e lib/openarm_mujoco -e lib/openarm_control -e nodes/dora-openarm-kinematics
     path: dora-openarm-ik
     args: >-
       --mode bimanual --tick-hz 250
@@ -80,9 +74,6 @@ nodes:
 
   # ── MuJoCo viewer (replaces follower-right, follower-left, and all cameras) ──
   - id: mujoco-collect
-    build: pip install -e nodes/dora-openarm-mujoco
-    # Debug lib/: comment the build above and uncomment the next line.
-    # build: pip install -e lib/openarm_mujoco -e nodes/dora-openarm-mujoco
     path: dora-openarm-mujoco
     args: "--scene demo --keyframe home --enable-collision --ctrl --viewer --render"
     env:
@@ -106,7 +97,6 @@ nodes:
       - camera_ceiling
 
   - id: recorder
-    build: pip install -e nodes/dora-openarm-dataset-recorder
     path: dora-openarm-dataset-recorder
     env:
       METADATA_FILE: "metadata_mujoco.yaml"
