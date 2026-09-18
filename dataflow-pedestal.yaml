@@ -42,7 +42,7 @@ nodes:
     path: dora-openarm-quitter
     inputs:
       command: ui/command
-      tick: dora/timer/secs/1
+      tick: dora/timer/millis/4
     outputs:
       - tick
 
@@ -73,8 +73,13 @@ nodes:
 
   - id: ik
     build: pip install -e nodes/dora-openarm-kinematics
+    # Debug lib/: comment the build above and uncomment the next line.
+    # build: pip install -e lib/openarm_mujoco -e lib/openarm_control -e nodes/dora-openarm-kinematics
     path: dora-openarm-ik
-    args: "--mode bimanual --max-iters 10 --dt 0.1 --damping 0.1 --posture-cost 0.01 --lm-damping 0.01"
+    args: >-
+      --mode bimanual --tick-hz 250
+      --max-iters 5 --damping 0.1
+      --posture-cost 0 --lm-damping 0.01 --limit-velocity
     inputs:
       target_right: webxr/pose_right
       target_left: webxr/pose_left
@@ -88,11 +93,13 @@ nodes:
   # ── MuJoCo viewer  ──
   - id: mujoco-viewer
     build: pip install -e nodes/dora-openarm-mujoco
+    # Debug lib/: comment the build above and uncomment the next line.
+    # build: pip install -e lib/openarm_mujoco -e nodes/dora-openarm-mujoco
     path: dora-openarm-mujoco
     args: "--scene pedestal --keyframe home --viewer --debug-frames"
     inputs:
-      position_left: ik/position_left
-      position_right: ik/position_right
+      move_position_left: ik/position_left
+      move_position_right: ik/position_right
       pose_right: webxr/pose_right
       pose_left: webxr/pose_left
       joystick_y: webxr/joystick_y_left
@@ -100,7 +107,9 @@ nodes:
       - status
 
   - id: follower-right
-    build: pip install -e nodes/dora-openarm
+    build: pip install -e nodes/dora-openarm "openarm-driver>=0.5.0"
+    # Debug lib/: comment the build above and uncomment the next line.
+    # build: pip install -e lib/openarm_can/python -e lib/openarm_driver -e nodes/dora-openarm
     path: dora-openarm
     args: "--side right --align-trigger gripper --config openarm_pedestal"
     inputs:
@@ -113,7 +122,9 @@ nodes:
       - status
 
   - id: follower-left
-    build: pip install -e nodes/dora-openarm
+    build: pip install -e nodes/dora-openarm "openarm-driver>=0.5.0"
+    # Debug lib/: comment the build above and uncomment the next line.
+    # build: pip install -e lib/openarm_can/python -e lib/openarm_driver -e nodes/dora-openarm
     path: dora-openarm
     args: "--side left --align-trigger gripper --config openarm_pedestal"
     inputs:

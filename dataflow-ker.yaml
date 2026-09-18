@@ -47,7 +47,6 @@ nodes:
 
   - id: quittable-tick-leader
     build: pip install -e nodes/dora-openarm-quitter
-    # build: pip install dora-openarm-quitter
     path: dora-openarm-quitter
     inputs:
       command: ui/command
@@ -68,6 +67,8 @@ nodes:
 
   - id: leader
     build: pip install -e nodes/dora-openarm-ker
+    # Debug lib/: comment the build above and uncomment the next line.
+    # build: pip install -e lib/openarm_can/python -e lib/openarm_ker -e nodes/dora-openarm-ker
     path: dora-openarm-ker
     inputs:
       tick: quittable-tick-leader/tick
@@ -77,10 +78,11 @@ nodes:
       - metadata
 
   - id: follower-right
-    build: pip install -e nodes/dora-openarm
-    # build: pip install dora-openarm
+    build: pip install -e nodes/dora-openarm "openarm-driver>=0.5.0"
+    # Debug lib/: comment the build above and uncomment the next line.
+    # build: pip install -e lib/openarm_can/python -e lib/openarm_driver -e nodes/dora-openarm
     path: dora-openarm
-    args: "--side right --align-trigger gripper"
+    args: "--side right --align-trigger gripper --config openarm_cell_higher_pd_zero_offset.yaml"
     inputs:
       # Event ID is only used. Event value isn't used.
       request_state: leader/follower_position_right
@@ -106,10 +108,11 @@ nodes:
       - image
 
   - id: follower-left
-    build: pip install -e nodes/dora-openarm
-    # build: pip install dora-openarm
+    build: pip install -e nodes/dora-openarm "openarm-driver>=0.5.0"
+    # Debug lib/: comment the build above and uncomment the next line.
+    # build: pip install -e lib/openarm_can/python -e lib/openarm_driver -e nodes/dora-openarm
     path: dora-openarm
-    args: "--side left --align-trigger gripper"
+    args: "--side left --align-trigger gripper --config openarm_cell_higher_pd_zero_offset.yaml"
     inputs:
       # Event ID is only used. Event value isn't used.
       request_state: leader/follower_position_left
@@ -151,7 +154,6 @@ nodes:
 
   - id: camera-head-stereo-splitter
     build: pip install -e nodes/dora-opencv-image-splitter
-    # build: pip install dora-opencv-image-splitter
     path: dora-opencv-image-splitter
     env:
       SPLIT_MODE: "vertical"
@@ -182,7 +184,6 @@ nodes:
 
   - id: recorder
     build: pip install -e nodes/dora-openarm-dataset-recorder
-    # build: pip install dora-openarm-dataset-recorder
     path: dora-openarm-dataset-recorder
     env:
       METADATA_FILE: "metadata.yaml"
